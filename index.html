@@ -23,8 +23,11 @@
     --line:#000000; --border:#e2e5eb;
     --tp:var(--leave); --tn:var(--stay); --fp:var(--stay); --fn:var(--leave);
     /* ความสูงคงที่ของส่วนล่าง: กล่อง Metric ทุกกล่องสูงเท่ากัน และแถว Confusion matrix สูง = ชื่อหัวข้อ + 2 กล่อง + ช่องว่าง */
-    --metric-h:46px;
-    --row-h:calc(var(--metric-h) * 2 + 20px);
+    --metric-h:54px;          /* ความสูงกล่อง Metric ทุกกล่อง (เดิม 46) */
+    --side-title-h:14px;      /* ความสูงหัวข้อ "Metrics" (เดิม 12) */
+    --side-gap:6px;           /* ช่องว่างระหว่างหัวข้อ/กล่องฝั่งขวา (เดิม 4) */
+    --block-gap:10px;         /* ช่องว่างระหว่างบล็อกใหญ่: กราฟ / แถว Confusion matrix / กล่องล่าง (เดิม 6) */
+    --row-h:calc(var(--metric-h) * 2 + var(--side-title-h) + var(--side-gap) * 2);   /* ความสูงแถว Confusion matrix + Metrics */
   }
 
   * {
@@ -99,7 +102,7 @@
   /* ตกแต่งกล่องสำหรับแสดงกราฟ Dot Plot */
   .dotplot-wrap{
     flex:1 1 auto; min-height:0; background:var(--panel); border:1px solid var(--border);
-    border-radius:12px; padding:6px 8px 3px 26px; margin-bottom:6px; 
+    border-radius:12px; padding:6px 8px 3px 26px; margin-bottom:var(--block-gap); 
     display:flex; flex-direction:column; position:relative;
   }
   
@@ -125,7 +128,7 @@
   .face-icon svg{display:block; overflow:visible;}
 
   /* คลาสสำหรับแบ่ง 2 คอลัมน์ (ซ้ายตาราง ขวากล่องค่าประเมิน) */
-  .row{flex:0 0 var(--row-h); height:var(--row-h); display:flex; gap:8px; margin-bottom:6px;}
+  .row{flex:0 0 var(--row-h); height:var(--row-h); display:flex; gap:8px; margin-bottom:var(--block-gap);}
 
   /* ตกแต่งการ์ดแสดงตาราง Confusion matrix */
   .cm-card{
@@ -162,9 +165,9 @@
 
   /* ตกแต่งกล่อง Metrics ด้านขวาบน (Accuracy, Recall) */
   .side{
-    flex:1 1 0; min-width:0; min-height:0; display:flex; flex-direction:column; gap:4px;
+    flex:1 1 0; min-width:0; min-height:0; display:flex; flex-direction:column; gap:var(--side-gap);
   }
-  .side .metrics-title{margin:0; flex:0 0 12px; height:12px; line-height:12px;}
+  .side .metrics-title{margin:0; flex:0 0 var(--side-title-h); height:var(--side-title-h); line-height:var(--side-title-h);}
   .side .metric{flex:0 0 var(--metric-h);}
   
   /* ตกแต่งตัวกล่อง Metric แต่ละกล่องให้มีเงาและพื้นหลังสวยงาม */
