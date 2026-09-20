@@ -42,6 +42,7 @@
     /* หน้าตาของปุ่มแท็บเมื่อถูกเลือก (Active) */
     background: #e8e6e6; color: #000000; border-color: #acacac;
   }
+  a.tab{text-decoration:none;}   /* แท็บที่เป็นลิงก์ ไม่ขีดเส้นใต้ */
 
   .thresh-bar{
     flex:0 0 auto; background:var(--panel); border:1px solid var(--border); border-radius:12px;
@@ -146,12 +147,12 @@
     <h1>HR Attrition<br>ROC-AUC</h1>
   </div>
 
-  <!-- ส่วนแสดงแท็บ (สำหรับ UI ตัวอย่าง เหมือนหน้า 1) หน้านี้คือแท็บ ROC -->
+  <!-- แถบแท็บ: กดเพื่อสลับหน้า (ลิงก์ไปไฟล์ page1-4.html ที่อยู่โฟลเดอร์เดียวกัน) -->
   <div class="tabs">
-    <div class="tab">Metric Dependent Threshold</div>
-    <div class="tab active">ROC</div>
-    <div class="tab">3</div>
-    <div class="tab">4</div>
+    <a class="tab" href="index.html">Metric Dependent Threshold</a>
+    <div class="tab active" aria-current="page">ROC</div>
+    <a class="tab" href="page3.html">AUC</a>
+    <a class="tab" href="page4.html">PR-AUC</a>
     <div class="tab">5</div>
     <div class="tab">6</div>
   </div>
@@ -585,6 +586,13 @@ applySymbolTheme();
 renderFaceIcons();
 
 update();
+</script>
+<script>
+// เลื่อนแถบแท็บให้เห็นแท็บที่เลือกอยู่เสมอ (กรณีหน้าจอแคบ)
+(function(){
+  var a = document.querySelector('.tabs .tab.active');
+  if (a && a.scrollIntoView) a.scrollIntoView({inline:'center', block:'nearest'});
+})();
 </script>
 </body>
 </html>
