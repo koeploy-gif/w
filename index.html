@@ -1,51 +1,827 @@
-<!-- ปุ่มกดเพื่อใส่รหัสผ่าน (ตกแต่งให้เข้ากับธีมแอปของคุณ) -->
-  <div style="flex: 0 0 auto; text-align: center; margin-top: 10px;">
-    <button class="unlock-btn" onclick="unlockNextTab()">
-      🔒 ปลดล็อกหัวข้อถัดไป
-    </button>
+<!DOCTYPE html>
+<!-- ประกาศประเภทเอกสารว่าเป็น HTML5 เพื่อให้เบราว์เซอร์แสดงผลได้อย่างถูกต้อง -->
+<html lang="th">
+<!-- กำหนดภาษาหลักของหน้าเว็บเป็นภาษาไทย -->
+<head>
+<meta charset="UTF-8">
+<!-- กำหนดการเข้ารหัสตัวอักษรเป็น UTF-8 เพื่อให้รองรับการแสดงผลภาษาไทยและสัญลักษณ์ต่างๆ -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- ทำให้หน้าเว็บรองรับการแสดงผลบนหน้าจอมือถือ (Responsive) และพอดีกับขอบจอ -->
+<title>HR Attrition — Metric Dependent Threshold </title>
+<!-- กำหนดชื่อข้อความที่จะแสดงบนแท็บของเบราว์เซอร์ -->
+<style>
+  /* ส่วนนี้คือ CSS สำหรับตกแต่งหน้าเว็บ */
+  
+  :root {
+    /* กำหนดตัวแปร CSS (CSS Variables) สำหรับสีต่างๆ เพื่อให้เรียกใช้และแก้ไขง่าย */
+    --bg:#ffffff; --panel:#f6f7f9; --panel2:#eef0f4; 
+    --ink:#000000; --muted:#000000;
+    --neg:#10B981; /* สีเขียว สำหรับค่า Negative */
+    --pos:#f43f5e; /* สีแดง สำหรับค่า Positive */
+    /* --stay (สีพนักงานที่ไม่ลาออก) และ --leave (สีพนักงานที่ลาออก) ถูกตั้งค่าจาก SYMBOLS ในส่วน JavaScript ที่เดียว
+       (ใช้ร่วมกันทั้งสัญลักษณ์ในกราฟ, legend, Confusion matrix และสีของสไลเดอร์) */
+    --line:#000000; --border:#e2e5eb;
+    --tp:var(--leave); --tn:var(--stay); --fp:var(--stay); --fn:var(--leave);
+    /* ความสูงคงที่ของส่วนล่าง: กล่อง Metric ทุกกล่องสูงเท่ากัน และแถว Confusion matrix สูง = ชื่อหัวข้อ + 2 กล่อง + ช่องว่าง */
+    --metric-h:59px;          /* ความสูงกล่อง Metric ฝั่งขวา (ลดลง 6px) */
+    --metric-bottom-h:10px;   /* ความสูงกล่อง Metric ด้านล่าง (คงเดิม) */        /* ความสูงกล่อง Metric ทุกกล่อง (ล่างสุด + ฝั่งขวาของ Confusion matrix) ปรับให้ความสูงรวมส่วนล่างเท่าหน้า 3 */
+    --side-title-h:14px;      /* ความสูงหัวข้อ "Metrics" (เดิม 12) */
+    --side-gap:12px;           /* ช่องว่างระหว่างหัวข้อ/กล่องฝั่งขวา (เดิม 4) */
+    --block-gap:8px;          /* ช่องว่างใต้แถว Confusion matrix (เท่าหน้า 3) */
+    --row-min:195px;          /* ความสูงขั้นต่ำของแถว Confusion matrix = ความสูงตามเนื้อหาของการ์ด Confusion matrix ในหน้า 3 */
+  }
+ 
+  * {
+    /* รีเซ็ตค่าขอบเขตของทุกองค์ประกอบให้รวมขอบ (border) ไว้ในความกว้าง/สูงแล้ว */
+    box-sizing:border-box; 
+    /* ปิดแถบไฮไลต์สีฟ้าเวลาเอานิ้วกดบนมือถือ */
+    -webkit-tap-highlight-color:transparent;
+  }
+  
+  html,body { height:100%; }
+  
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    /* กำหนดฟอนต์หลักของหน้าเว็บตามระบบปฏิบัติการ */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    /* ใช้ Flexbox เพื่อจัดเรียงหน้าเว็บจากบนลงล่าง */
+    display:flex; flex-direction:column;
+    height:100dvh; overflow-y:auto; overflow-x:hidden; 
+    /* กำหนดระยะขอบ (padding) โดยเผื่อพื้นที่สำหรับจอแหว่งของมือถือรุ่นใหม่ๆ (safe-area) */
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+  
+  /* ตกแต่งส่วนหัวเรื่อง (Header) */
+  .head{flex:0 0 auto; margin-bottom:8px;}
+  .head h1{font-size:15px; font-weight:700; margin:0 0 2px; letter-spacing:.2px;}
+  .head p{font-size:11px; color:var(--muted); margin:0; line-height:1.35;}
+ 
+  /* ตกแต่งแถบเมนู Tabs ด้านบน */
+  .tabs {
+    display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; flex: 0 0 auto;
+    padding-bottom: 2px;
+  }
+  .tab {
+    /* หน้าตาของปุ่มแท็บปกติ */
+    padding: 6px 12px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;
+    white-space: nowrap; color: var(--muted);
+  }
+  .tab.active {
+    /* หน้าตาของปุ่มแท็บเมื่อถูกเลือก (Active) */
+    background: #e8e6e6; color: #000000; border-color: #acacac;
+  }
+  a.tab{text-decoration:none;}   /* แท็บที่เป็นลิงก์ ไม่ขีดเส้นใต้ */
+ 
+  /* ตกแต่งกล่องสำหรับสไลเดอร์ปรับค่า Threshold */
+  .thresh-bar{
+    flex:0 0 auto; background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:10px 14px 12px; margin-bottom:8px;
+  }
+  .thresh-top{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;}
+  .thresh-top label{font-size:11px; color:var(--muted); letter-spacing:.2px;}
+  input[type=range]{
+    display:block; width:100%; -webkit-appearance:none; height:8px; border-radius:999px;
+    background:linear-gradient(to right, var(--stay) 0%, var(--stay) var(--pct,50%), var(--leave) var(--pct,50%), var(--leave) 100%);
+  }
+  
+  /* ตกแต่งตัวสไลเดอร์ (Input Range) ให้มีสีแบ่ง 2 ฝั่ง */
+  input[type=range]{
+    display:block; width:100%; -webkit-appearance:none; height:8px; border-radius:999px;
+    /* ใช้ Gradient เพื่อระบายสีเขียวฝั่งซ้ายและสีแดงฝั่งขวาตามตำแหน่งของสไลเดอร์ (--pct) */
+    background:linear-gradient(to right, var(--stay) 0%, var(--stay) var(--pct,50%), var(--leave) var(--pct,50%), var(--leave) 100%);
+    margin: 0; z-index: 10; position: relative;
+  }
+  /* ตกแต่งปุ่มกลมๆ ที่ใช้จับลากบนสไลเดอร์ (สำหรับ Chrome/Safari) */
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:24px; height:24px; border-radius:50%; margin-top:0;
+    background:#fff; border:3px solid var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.4);
+  }
+  /* ตกแต่งปุ่มกลมๆ ที่ใช้จับลากบนสไลเดอร์ (สำหรับ Firefox) */
+  input[type=range]::-moz-range-thumb{
+    width:24px; height:24px; border-radius:50%; background:#fff; border:2px solid var(--ink);
+  }
+  input[type=range]::-moz-range-track{height:8px; border-radius:999px;}
+  .thresh-val{font-variant-numeric:tabular-nums; font-weight:800; font-size:15px;}
+ 
+  /* ตกแต่งกล่องสำหรับแสดงกราฟ Dot Plot */
+  .dotplot-wrap{
+    flex:1 1 auto; min-height:0; background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; padding:8px 10px 2px; margin-bottom:8px; display:flex; flex-direction:column;
+    position:relative;
+  }
+ 
+  .row{flex:0 0 auto; display:flex; gap:8px; margin-bottom:8px;}
+  
+  /* พื้นที่แสดงกราฟ SVG + คำอธิบายแกน (แกน X ใต้กราฟ, แกน Y หมุนแนวตั้งด้านซ้าย) */
+  .dp-chart-area{flex:1; min-height:0; min-width:0; display:flex; flex-direction:column; position:relative;}
+  .dp-chart-area svg{flex:1; min-height:0; width:100%; display:block;}
+  .dp-xlabel{flex:0 0 auto; text-align:center; font-size:10px; font-weight:600; color:var(--muted); padding:0;}
+  .dp-ylabel{
+    position:absolute; left:-4px; top:calc((100% - 13px) / 2);   /* กึ่งกลางความสูงของกราฟ (ไม่นับบรรทัดแกน X) */
+    transform:translate(-50%,-50%) rotate(-90deg);
+    font-size:10px; color:var(--muted); font-weight:600; white-space:nowrap;
+  }
+ 
+  /* คำอธิบายสัญลักษณ์ (Legend) ด้านล่างกราฟ */
+  .legend{display:flex; gap:10px; flex-wrap:wrap; font-size:10px; color:var(--muted); padding:4px 2px 2px;}
+  .legend span{display:inline-flex; align-items:center; gap:4px;}
+ 
+  /* ไอคอนสัญลักษณ์ ☺ ☹ × ใน legend และ Confusion matrix ถูกสร้างด้วย JS จาก SYMBOLS (สี/ขนาดกำหนดที่เดียว) */
+  .face-icon{display:inline-flex; align-items:center; justify-content:center; line-height:0; flex:0 0 auto;}
+  .face-icon svg{display:block; overflow:visible;}
+ 
+  /* คลาสสำหรับแบ่ง 2 คอลัมน์ (ซ้ายตาราง ขวากล่องค่าประเมิน) */
+  .row{flex:1.3 1 0; min-height:var(--row-min); display:flex; gap:8px; margin-bottom:var(--block-gap);}   /* แบ่งพื้นที่ที่เหลือกับกราฟ 1 : 1.3 เหมือนหน้า 3 */
+ 
+  /* ตกแต่งการ์ดแสดงตาราง Confusion matrix */
+  .cm-card{
+    flex:0 0 calc(50% - 4px); min-width:0; background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:5px 6px 6px; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .cm-title{font-size:10px; font-weight:700; margin-bottom:1px;}
+  /* สร้างตาราง Grid แบบ 3x3 สำหรับใส่ผลลัพธ์ */
+  .cm-grid{
+    flex:1 1 auto; min-height:0; display:grid; grid-template-columns:26px 1fr 1fr; grid-template-rows:auto 1fr 1fr;
+    gap:2px;
+  }
+  .cm-colhead{font-size:7px; color:var(--muted); text-align:center; line-height:1.1; align-self:end; padding-bottom:0;}
+  .cm-rowhead{font-size:7px; color:var(--muted); display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.15;}
+  
+  /* ตกแต่งแต่ละช่องสี่เหลี่ยมภายใน Confusion matrix (TP, TN, FP, FN) */
+  .quad{
+    border-radius:8px; padding:3px 2px 2px; text-align:center; position:relative;
+    border:1px solid rgba(0,0,0,.04); display:flex; flex-direction:column; justify-content:center; align-items:center;
+  }
+  .quad-main{display:flex; align-items:center; justify-content:center; gap:5px;}
+  .quad .n{font-size:14px; font-weight:800; line-height:1.1; text-align:left;}   /* ความกว้างขั้นต่ำถูกจองโดย JS ตามจำนวนหลักสูงสุด */
+  .quad .l{font-size:14px;font-weight:650; color:#000000; margin-top:0; line-height:1.1;}
+  /* สีพื้นหลังช่องตามผลลัพธ์ */
+  .quad.tp{background:rgba(21, 214, 79, 0.10);} /* ทายถูกว่าลาออก (พื้นเขียวอ่อน) */
+  .quad.fp{background:rgba(245, 34, 87, 0.10);} /* ทายผิดว่าลาออก (พื้นแดงอ่อน) */
+  .quad.fn{background:rgba(245, 34, 87, 0.10);} /* ทายผิดว่าไม่ลาออก (พื้นแดงอ่อน) */
+  .quad.tn{background:rgba(21, 214, 79, 0.10);} /* ทายถูกว่าไม่ลาออก (พื้นเขียวอ่อน) */
+ 
+  /* ตกแต่งกล่อง Metrics ที่อยู่ด้านล่างสุด (Precision, F1) */
+  .metrics{
+    flex:0 0 var(--metric-h); height:var(--metric-h); display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
+  }
+ 
+  /* ตกแต่งกล่อง Metrics ด้านขวาบน (Accuracy, Recall) */
+  .side{
+    /* กริด 3 แถว: หัวข้อ (สูงคงที่) + ช่อง Accuracy + ช่อง Recall (แบ่งพื้นที่ที่เหลือเท่ากัน)
+       กล่องอยู่กึ่งกลางช่องของตัวเอง จึงปรับความสูงกล่องได้โดยจุดกึ่งกลางไม่ขยับ */
+    flex:1 1 0; min-width:0; min-height:0; display:grid;
+    grid-template-rows:var(--side-title-h) 1fr 1fr; row-gap:var(--side-gap);
+    margin-top: 6px; /* ดันลงมา 6px */
+    margin-bottom: 6px; /* ดันขึ้นไป 6px */
+  }
+  .side .metrics-title{margin:0; flex:0 0 var(--side-title-h); height:var(--side-title-h); line-height:var(--side-title-h);}
+  .side .metric{align-self:center; height:var(--metric-h); min-height:0;}   /* สูงตาม --metric-h แล้วอยู่กึ่งกลางช่องของตัวเอง */
+  
+  /* ตกแต่งตัวกล่อง Metric แต่ละกล่องให้มีเงาและพื้นหลังสวยงาม */
+  .metric{
+    background:#f7f9fc; 
+    border:1px solid rgba(0,0,0,0.04); border-radius:12px;
+    padding:6px 8px; text-align:left;   /* เว้นขอบบน/ล่าง 6px */
+    height:var(--metric-h); overflow:hidden; min-width:0;
+    display:flex; flex-direction:column; justify-content:space-between;   /* หัวกล่องชิดขอบบน สูตรชิดขอบล่าง ช่องว่างตรงกลางเพิ่มตามความสูงกล่อง */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+    container-type:inline-size; /* ตั้งค่าเพื่อให้คำนวณขนาดตัวอักษรตามกล่องได้ */
+    --fw:800;   /* ความหนาของ "สูตรตัวอักษร" และ "ผลลัพธ์" (สูตรใส่ตัวเลขไม่หนา) แก้ที่นี่ที่เดียว */
+  }
+  .metric .lbl{font-size:11px; color:var(--ink); font-weight:700; line-height:1.2;}
+  /* หัวกล่อง: ชื่อตัวชี้วัดชิดซ้าย ค่าผลลัพธ์ตัวใหญ่ชิดขวา (ทั้ง 4 กล่องเหมือนกัน) */
+  .metric .mhead{display:flex; align-items:baseline; justify-content:space-between; gap:6px;}
+  .metric .mhead .val{font-size:16px; font-weight:var(--fw); line-height:1.1; font-variant-numeric:tabular-nums; white-space:nowrap;}
+ 
+  /* จัดรูปแบบการแสดงผล "สูตรคณิตศาสตร์แบบเศษส่วน" ให้สวยงาม */
+  .formula{
+    --w:17; /* ความกว้างโดยประมาณของแถวสูตร (หน่วย em) ใช้ค่าเดียวกันทั้ง 4 กล่อง ขนาดตัวอักษรสูตรจึงเท่ากันหมด */
+    font-size:min(9.5px, calc(96cqw / var(--w))); /* ปรับขนาดฟอนต์ตามความกว้างกล่อง */
+    display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; white-space:nowrap;   /* ห้ามตกบรรทัด ความสูงจะได้ไม่เปลี่ยน */
+    gap:2px .4em; margin-top:0; line-height:1.1;
+    font-variant-numeric:tabular-nums;
+  }
+  .formula .eq{color:var(--muted); font-weight:600;}
+  /* ตัวเลขในสูตร: จองความกว้างตามจำนวนหลักสูงสุด (JS) ตัวเลขวิ่งแล้วตำแหน่งอื่นจึงไม่ขยับ */
+  .formula [data-num]{display:inline-block; text-align:right;}
+  /* ตกแต่งส่วนเศษและส่วนให้มีเส้นคั่นตรงกลาง */
+  .formula .frac{display:inline-flex; flex-direction:column; align-items:center; white-space:nowrap;}
+  .formula .frac .top{padding: 0.12em .25em .12em; border-bottom:1px solid currentColor;}
+  .formula .frac .bot{padding:.12em .25em 0;}
+  .formula .sym{font-family:"Times New Roman", Georgia, serif; font-style:italic; color:#222; font-weight:var(--fw);}
+  .formula .num{color:#111;}
+ 
+  .metrics-title{font-size:10px; font-weight:700; margin:0 0 4px;}
+ 
+  /* หากหน้าจอสูงเพียงพอ จะปรับขนาดตัวอักษรให้ใหญ่ขึ้นนิดหน่อย */
+  @media (min-height:760px){
+    .head h1{font-size:16px;}
+    .thresh-val{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+ 
+  <!-- ส่วนแสดงหัวเรื่องหลักของแอปพลิเคชัน -->
+  <div class="head">
+    <h1>HR Attrition<br>Metric Dependent Threshold</h1>
   </div>
-
-  <style>
-    /* ตกแต่งปุ่มให้ดูสวยงามเข้ากับหน้าเว็บของคุณ */
-    .unlock-btn {
-      background: #111;
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      padding: 10px 24px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: transform 0.1s, background 0.2s;
+ 
+  <!-- แถบแท็บ: กดเพื่อสลับหน้า (ลิงก์ไปไฟล์ page1-4.html ที่อยู่โฟลเดอร์เดียวกัน) -->
+  <div class="tabs">
+    <div class="tab active" aria-current="page">Metric Dependent Threshold</div>
+    <a class="tab" href="page2.html">ROC</a>
+    <a class="tab" href="page3.html">AUC</a>
+    <a class="tab" href="page4.html">PR-AUC</a>
+    <div class="tab">5</div>
+    <div class="tab">6</div>
+  </div>
+ 
+  <!-- กล่องควบคุมจุดตัดสินใจ (Decision Threshold Slider) -->
+  <div class="thresh-bar">
+    <div class="thresh-top">
+      <label>Decision threshold</label>
+      <!-- จุดนี้จะแสดงตัวเลข Threshold (เช่น 0.50) ที่เปลี่ยนแปลงตามสไลเดอร์ -->
+      <div class="thresh-val" id="thVal">0.50</div>
+    </div>
+    <!-- ตัวสไลเดอร์ ค่าเริ่มต้นที่ 0.5 ลากได้ตั้งแต่ 0 ถึง 1 ทีละ 0.01 -->
+    <input id="thSlider" type="range" min="0" max="1" step="0.01" value="0.5">
+  </div>
+ 
+  <!-- กล่องแสดงกราฟ (Dot Plot) -->
+  <div class="dotplot-wrap">
+    <div class="dp-chart-area">
+      <div class="dp-ylabel">จำนวนพนักงาน</div>
+      <svg id="dotPlot" viewBox="0 0 400 220" style="width: 100%; height: auto; max-height: 100%;"></svg>
+      <div class="dp-xlabel">ค่าความน่าจะเป็นที่จะลาออก</div>
+    </div>
+    
+    <!-- คำอธิบายความหมายของสัญลักษณ์ด้านล่างกราฟ -->
+    <div class="legend">
+      <span><span class="face-icon" data-face="stay" data-size="legend"></span>: พนักงานที่ไม่ลาออก</span>
+      <span><span class="face-icon" data-face="leave" data-size="legend"></span>: พนักงานที่ลาออก</span>
+      <span><span class="face-icon" data-face="wrong" data-size="legend"></span>: โมเดลทำนายผิดพลาด</span>
+    </div>
+  </div>
+ 
+  <!-- ส่วนกลางที่มีตาราง 2 คอลัมน์ (Confusion Matrix และ Metrics แถวแรก) -->
+  <div class="row">
+    <!-- กล่องซ้าย: ตาราง Confusion matrix -->
+    <div class="cm-card">
+      <div class="cm-title">Confusion matrix</div>
+      <div class="cm-grid">
+        <div class="cm-corner"></div>
+        <div class="cm-colhead">ทำนาย<br>ไม่ลาออก</div>
+        <div class="cm-colhead">ทำนาย<br>ลาออก</div>
+ 
+        <div class="cm-rowhead">ค่าจริง<br>ไม่ลาออก</div>
+        
+        <!-- ช่อง TN (True Negative) -->
+        <div class="quad tn">
+          <div class="quad-main">
+            <div class="face-icon" data-face="stay" data-size="cm"></div>
+            <div class="n" id="cmTN">-</div>
+          </div>
+          <div class="l">TN</div>
+        </div>
+        
+        <!-- ช่อง FP (False Positive) โมเดลทายผิดว่าลาออก -->
+        <div class="quad fp">
+          <div class="quad-main">
+            <div class="face-icon" data-face="stay" data-size="cm" data-wrong></div>
+            <div class="n" id="cmFP">-</div>
+          </div>
+          <div class="l">FP</div>
+        </div>
+ 
+        <div class="cm-rowhead">ค่าจริง<br>ลาออก</div>
+        
+        <!-- ช่อง FN (False Negative) โมเดลทายผิดว่าไม่ลาออก -->
+        <div class="quad fn">
+          <div class="quad-main">
+            <div class="face-icon" data-face="leave" data-size="cm" data-wrong></div>
+            <div class="n" id="cmFN">-</div>
+          </div>
+          <div class="l">FN</div>
+        </div>
+        
+        <!-- ช่อง TP (True Positive) -->
+        <div class="quad tp">
+          <div class="quad-main">
+            <div class="face-icon" data-face="leave" data-size="cm"></div>
+            <div class="n" id="cmTP">-</div>
+          </div>
+          <div class="l">TP</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- กล่องขวา: แสดงตัวชี้วัด Accuracy และ Recall -->
+    <div class="side">
+      <div class="metrics-title">Metrics ( ค่าประเมินโมเดล )</div>
+      
+      <!-- ตัวชี้วัด Accuracy -->
+      <div class="metric" id="boxAcc">
+        <div class="mhead"><div class="lbl">Accuracy</div><span class="val" id="mAcc">0.00</span></div>
+        <div class="formula" style="--w:17;">          <span class="eq">=</span>
+          <span class="frac sym"><span class="top">TP+TN</span><span class="bot">TP+TN+FP+FN</span></span>
+          <span class="eq">=</span>
+          <span class="frac num"><span class="top"><span data-num="tp">0</span>+<span data-num="tn">0</span></span><span class="bot"><span data-num="tp">0</span>+<span data-num="tn">0</span>+<span data-num="fp">0</span>+<span data-num="fn">0</span></span></span>
+        </div>
+      </div>
+      
+      <!-- ตัวชี้วัด Recall -->
+      <div class="metric" id="boxRecall">
+        <div class="mhead"><div class="lbl">Recall</div><span class="val" id="mTPR">0.00</span></div>
+        <div class="formula" style="--w:17;">          <span class="eq">=</span>
+          <span class="frac sym"><span class="top">TP</span><span class="bot">TP+FN</span></span>
+          <span class="eq">=</span>
+          <span class="frac num"><span class="top"><span data-num="tp">0</span></span><span class="bot"><span data-num="tp">0</span>+<span data-num="fn">0</span></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ส่วนล่างสุด: แสดงตัวชี้วัด Precision และ F1-Score -->
+  <div class="metrics">
+    <div class="metric" id="boxPrec">
+        <div class="mhead"><div class="lbl">Precision</div><span class="val" id="mPrec">0.00</span></div>
+        <div class="formula" style="--w:17;">        <span class="eq">=</span>
+        <span class="frac sym"><span class="top">TP</span><span class="bot">TP+FP</span></span>
+        <span class="eq">=</span>
+        <span class="frac num"><span class="top"><span data-num="tp">0</span></span><span class="bot"><span data-num="tp">0</span>+<span data-num="fp">0</span></span></span>
+        </div>
+      </div>
+    <div class="metric" id="boxF1">
+        <div class="mhead"><div class="lbl">F1-score</div><span class="val" id="mF1">0.00</span></div>
+        <div class="formula" style="--w:17;">        <span class="eq">=</span>
+        <span class="frac sym"><span class="top">2TP</span><span class="bot">2TP+FP+FN</span></span>
+        <span class="eq">=</span>
+        <span class="frac num"><span class="top">2×<span data-num="tp">0</span></span><span class="bot">2×<span data-num="tp">0</span>+<span data-num="fp">0</span>+<span data-num="fn">0</span></span></span>
+        </div>
+      </div>
+  </div>
+ 
+<!-- ส่วนของ JavaScript เพื่อทำให้ทุกอย่างทำงาน -->
+<script>
+/* ===============================================================
+   ★ ตั้งค่าสัญลักษณ์ทั้งหมดที่นี่ที่เดียว ★
+   ☺ (ไม่ลาออก)  ☹ (ลาออก)  × (โมเดลทำนายผิด)
+   dot plot, legend และ Confusion matrix วาดจากค่าชุดนี้ชุดเดียวกัน
+   จะเปลี่ยนสี/ขนาด/ตัวอักษร แก้แค่ตรงนี้ ที่อื่นเปลี่ยนตามอัตโนมัติ
+=============================================================== */
+const SYMBOLS = {
+  // ฟอนต์ที่ใช้วาดสัญลักษณ์ (เรียงตามลำดับความสำคัญ)
+  font:  "'Apple Symbols','Segoe UI Symbol','Noto Sans Symbols 2','Noto Sans Symbols','DejaVu Sans',sans-serif",
+ 
+  // \uFE0E = บังคับให้แสดงเป็นตัวอักษรเส้น ไม่ให้เครื่องแปลงเป็นอิโมจิสีเหลือง
+  stay:  { glyph: '\u263A\uFE0E', color: '#10B981' },   // ☺ พนักงานที่ไม่ลาออก
+  leave: { glyph: '\u2639\uFE0E', color: '#F43F5E' },   // ☹ พนักงานที่ลาออก
+ 
+  // × ที่ทับบนหน้าเมื่อโมเดลทำนายผิด
+  //   scale = ขนาดของ × เทียบกับเส้นผ่านศูนย์กลางของหน้า (1 = เท่ากับหน้า)
+  wrong: { glyph: '\u00D7', color: '#000000', scale: 0.95, weight: 900 },
+ 
+  // ขนาด "เส้นผ่านศูนย์กลางของหน้า" (หน่วย px) ในแต่ละที่
+  // ☺ กับ ☹ จะมีขนาดที่ตามองเห็นเท่ากันเสมอ ไม่ว่าฟอนต์ของเครื่องจะวาดตัวไหนใหญ่กว่า
+  size: {
+    legend:  12,   // ในคำอธิบายสัญลักษณ์ใต้กราฟ
+    cm:      14    // ในตาราง Confusion matrix
+  }
+};
+ 
+// ข้อมูลดิบที่ได้จากโมเดล (score = ความน่าจะเป็น, label = ค่าจริง 0 คืออยู่ 1 คือออก)
+const rawData = [{"score":0.0739,"label":0},{"score":0.0023,"label":0},{"score":0.1093,"label":0},{"score":0.0063,"label":0},{"score":0.3265,"label":1},{"score":0.2762,"label":0},{"score":0.0078,"label":0},{"score":0.0234,"label":0},{"score":0.0031,"label":0},{"score":0.0845,"label":0},{"score":0.0489,"label":0},{"score":0.0839,"label":0},{"score":0.41,"label":0},{"score":0.1674,"label":0},{"score":0.2858,"label":0},{"score":0.4089,"label":0},{"score":0.0163,"label":0},{"score":0.0053,"label":0},{"score":0.2674,"label":0},{"score":0.0116,"label":0},{"score":0.4667,"label":1},{"score":0.1037,"label":1},{"score":0.1108,"label":0},{"score":0.0129,"label":0},{"score":0.0042,"label":0},{"score":0.5123,"label":0},{"score":0.0872,"label":0},{"score":0.0717,"label":1},{"score":0.008,"label":0},{"score":0.0087,"label":1},{"score":0.0061,"label":0},{"score":0.1503,"label":0},{"score":0.0518,"label":0},{"score":0.0688,"label":0},{"score":0.1783,"label":0},{"score":0.8204,"label":1},{"score":0.0151,"label":0},{"score":0.0231,"label":0},{"score":0.0535,"label":0},{"score":0.4989,"label":1},{"score":0.0032,"label":0},{"score":0.5668,"label":0},{"score":0.0104,"label":0},{"score":0.0411,"label":0},{"score":0.1143,"label":0},{"score":0.0513,"label":0},{"score":0.3927,"label":0},{"score":0.3872,"label":0},{"score":0.0218,"label":0},{"score":0.0561,"label":0},{"score":0.0842,"label":0},{"score":0.0256,"label":0},{"score":0.0152,"label":0},{"score":0.2384,"label":0},{"score":0.0147,"label":0},{"score":0.0278,"label":0},{"score":0.0353,"label":0},{"score":0.7971,"label":1},{"score":0.0812,"label":0},{"score":0.0185,"label":0},{"score":0.038,"label":0},{"score":0.003,"label":0},{"score":0.0173,"label":0},{"score":0.0843,"label":0},{"score":0.0903,"label":0},{"score":0.0202,"label":0},{"score":0.1527,"label":0},{"score":0.2511,"label":1},{"score":0.0824,"label":0},{"score":0.028,"label":0},{"score":0.4307,"label":0},{"score":0.0047,"label":0},{"score":0.0041,"label":0},{"score":0.0818,"label":0},{"score":0.0451,"label":0},{"score":0.0067,"label":0},{"score":0.0006,"label":0},{"score":0.0079,"label":0},{"score":0.1689,"label":0},{"score":0.0159,"label":0},{"score":0.0228,"label":0},{"score":0.8591,"label":1},{"score":0.003,"label":1},{"score":0.0006,"label":0},{"score":0.0298,"label":0},{"score":0.1186,"label":0},{"score":0.0024,"label":0},{"score":0.1014,"label":1},{"score":0.027,"label":0},{"score":0.0607,"label":0},{"score":0.0229,"label":0},{"score":0.0029,"label":0},{"score":0.9709,"label":1},{"score":0.2428,"label":0},{"score":0.2425,"label":0},{"score":0.8718,"label":1},{"score":0.6485,"label":0},{"score":0.0477,"label":1},{"score":0.1408,"label":0},{"score":0.4313,"label":0},{"score":0.001,"label":0},{"score":0.6413,"label":0},{"score":0.1198,"label":0},{"score":0.02,"label":0},{"score":0.6492,"label":0},{"score":0.0253,"label":0},{"score":0.0748,"label":0},{"score":0.0003,"label":0},{"score":0.1172,"label":1},{"score":0.0859,"label":0},{"score":0.2905,"label":0},{"score":0.1502,"label":0},{"score":0.0257,"label":0},{"score":0.1053,"label":0},{"score":0.0701,"label":0},{"score":0.0435,"label":0},{"score":0.0629,"label":0},{"score":0.0327,"label":0},{"score":0.0472,"label":0},{"score":0.0168,"label":0},{"score":0.0736,"label":0},{"score":0.3652,"label":0},{"score":0.0074,"label":0},{"score":0.1204,"label":0},{"score":0.6592,"label":0},{"score":0.0295,"label":0},{"score":0.3544,"label":0},{"score":0.6262,"label":1},{"score":0.1625,"label":0},{"score":0.075,"label":0},{"score":0.7037,"label":1},{"score":0.0032,"label":0},{"score":0.0443,"label":1},{"score":0.4219,"label":0},{"score":0.0696,"label":0},{"score":0.1057,"label":0},{"score":0.391,"label":0},{"score":0.1543,"label":0},{"score":0.1747,"label":0},{"score":0.0044,"label":0},{"score":0.0007,"label":0},{"score":0.0059,"label":0},{"score":0.0527,"label":0},{"score":0.6683,"label":0},{"score":0.2468,"label":1},{"score":0.0186,"label":0},{"score":0.2918,"label":0},{"score":0.0632,"label":0},{"score":0.0174,"label":0},{"score":0.0021,"label":0},{"score":0.0162,"label":0},{"score":0.0821,"label":0},{"score":0.0765,"label":0},{"score":0.0046,"label":0},{"score":0.0375,"label":0},{"score":0.2978,"label":1},{"score":0.214,"label":1},{"score":0.0038,"label":0},{"score":0.7309,"label":1},{"score":0.1991,"label":0},{"score":0.0553,"label":0},{"score":0.051,"label":0},{"score":0.1059,"label":1},{"score":0.0133,"label":0},{"score":0.3009,"label":1},{"score":0.022,"label":0},{"score":0.0505,"label":1},{"score":0.1402,"label":0},{"score":0.4328,"label":1},{"score":0.0442,"label":0},{"score":0.216,"label":0},{"score":0.0394,"label":0},{"score":0.4857,"label":0},{"score":0.5099,"label":0},{"score":0.1771,"label":1},{"score":0.0092,"label":0},{"score":0.5039,"label":1},{"score":0.0038,"label":0},{"score":0.1472,"label":1},{"score":0.0939,"label":0},{"score":0.239,"label":0},{"score":0.1227,"label":0},{"score":0.0331,"label":0},{"score":0.4197,"label":1},{"score":0.0309,"label":0},{"score":0.0031,"label":0},{"score":0.0141,"label":0},{"score":0.0085,"label":0},{"score":0.0147,"label":0},{"score":0.3896,"label":0},{"score":0.2147,"label":1},{"score":0.0198,"label":0},{"score":0.0689,"label":0},{"score":0.0083,"label":0},{"score":0.0003,"label":0},{"score":0.2368,"label":0},{"score":0.101,"label":1},{"score":0.159,"label":0},{"score":0.0561,"label":0},{"score":0.1474,"label":0},{"score":0.8737,"label":1},{"score":0.0033,"label":0},{"score":0.0496,"label":0},{"score":0.158,"label":0},{"score":0.1245,"label":0},{"score":0.001,"label":0},{"score":0.0081,"label":0},{"score":0.2282,"label":0},{"score":0.0353,"label":0},{"score":0.0154,"label":0},{"score":0.0405,"label":0},{"score":0.0054,"label":0},{"score":0.0027,"label":0},{"score":0.0605,"label":0},{"score":0.9799,"label":1},{"score":0.0752,"label":0},{"score":0.0167,"label":0},{"score":0.0578,"label":0},{"score":0.1004,"label":0},{"score":0.6217,"label":1},{"score":0.0018,"label":0},{"score":0.055,"label":0},{"score":0.1925,"label":1},{"score":0.5557,"label":0},{"score":0.2368,"label":0},{"score":0.0211,"label":0},{"score":0.1046,"label":0},{"score":0.3311,"label":0},{"score":0.0021,"label":0},{"score":0.0224,"label":0},{"score":0.0258,"label":0},{"score":0.0117,"label":0},{"score":0.0285,"label":0},{"score":0.0257,"label":0},{"score":0.0015,"label":0},{"score":0.1485,"label":0},{"score":0.0295,"label":0},{"score":0.0146,"label":0},{"score":0.0403,"label":1},{"score":0.0599,"label":0},{"score":0.0006,"label":1},{"score":0.2309,"label":0},{"score":0.0039,"label":0},{"score":0.1864,"label":0},{"score":0.0282,"label":0},{"score":0.2577,"label":0},{"score":0.037,"label":1},{"score":0.0586,"label":0},{"score":0.0462,"label":0},{"score":0.0368,"label":0},{"score":0.6337,"label":1},{"score":0.3205,"label":1},{"score":0.0238,"label":0},{"score":0.1107,"label":0},{"score":0.0024,"label":0},{"score":0.0115,"label":0},{"score":0.8182,"label":1},{"score":0.134,"label":0},{"score":0.0595,"label":0},{"score":0.0028,"label":0},{"score":0.0003,"label":0},{"score":0.0077,"label":0},{"score":0.0021,"label":0},{"score":0.0039,"label":0},{"score":0.0113,"label":0},{"score":0.0862,"label":0},{"score":0.0313,"label":0},{"score":0.0741,"label":0},{"score":0.0379,"label":0},{"score":0.002,"label":0},{"score":0.2918,"label":1},{"score":0.0164,"label":0},{"score":0.0305,"label":0},{"score":0.6303,"label":0},{"score":0.0051,"label":0},{"score":0.1488,"label":0},{"score":0.6187,"label":1},{"score":0.0868,"label":0},{"score":0.0948,"label":0},{"score":0.1885,"label":0},{"score":0.0491,"label":0},{"score":0.1254,"label":0},{"score":0.0601,"label":0},{"score":0.1789,"label":0},{"score":0.0312,"label":0},{"score":0.187,"label":0},{"score":0.0009,"label":0},{"score":0.7765,"label":1},{"score":0.2346,"label":0},{"score":0.0131,"label":0},{"score":0.0084,"label":0},{"score":0.4712,"label":1},{"score":0.0081,"label":0},{"score":0.0022,"label":0}];
+ 
+// Namespace สำหรับสร้างแท็ก SVG ด้วย JavaScript
+const svgNS = "http://www.w3.org/2000/svg";
+const BIN = 0.025; // ระยะห่างของการปัดเศษข้อมูล เพื่อให้จุดข้อมูลเรียงกันเป็นแถว
+ 
+// ฟังก์ชันสำหรับจัดกลุ่มค่า (ปัดค่าให้อยู่ในช่วงทุกๆ 0.025)
+function binKey(s){ return Math.round(s / BIN) * BIN; }
+ 
+/* ---------------------------------------------------------------
+   ชุดฟังก์ชันกลางสำหรับวาดสัญลักษณ์ ☺ ☹ ×
+   ใช้ร่วมกันทั้ง dot plot / legend / Confusion matrix
+   (ตัวอักษร ☺ กับ ☹ ในแต่ละฟอนต์ถูกวาดขนาดไม่เท่ากัน จึงวัด "ขนาดเส้นที่มองเห็นจริง"
+    ด้วย canvas แล้วคำนวณ font-size ให้ได้เส้นผ่านศูนย์กลางตามที่ต้องการพอดี)
+---------------------------------------------------------------- */
+let _faceMetrics = null;
+ 
+function getFaceMetrics(){
+  if (_faceMetrics) return _faceMetrics; // ถ้าวัดไว้แล้ว ให้ใช้ของเดิม
+  const REF = 100; // วัดที่ขนาดอ้างอิง 100px
+  const fallback = { REF, stay: { dia: REF, cx: 0, cy: 0 }, leave: { dia: REF, cx: 0, cy: 0 } };
+  try {
+    // สร้าง Canvas ชั่วคราวเพื่อวัดขนาดของตัวอักษร
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = REF + 'px ' + SYMBOLS.font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    const measure = ch => {
+      const t = ctx.measureText(ch);
+      const w = t.actualBoundingBoxLeft + t.actualBoundingBoxRight;
+      const h = t.actualBoundingBoxAscent + t.actualBoundingBoxDescent;
+      return {
+        dia: Math.max(w, h), // เส้นผ่านศูนย์กลางของหน้า
+        cx: (t.actualBoundingBoxRight - t.actualBoundingBoxLeft) / 2, // จุดกึ่งกลางเส้นแนวนอน
+        cy: (t.actualBoundingBoxDescent - t.actualBoundingBoxAscent) / 2 // จุดกึ่งกลางเส้นแนวตั้ง (เทียบ baseline)
+      };
+    };
+    const stay = measure(SYMBOLS.stay.glyph), leave = measure(SYMBOLS.leave.glyph);
+    const ok = [stay.dia, leave.dia, stay.cx, stay.cy, leave.cx, leave.cy].every(Number.isFinite) && stay.dia > 0 && leave.dia > 0;
+    _faceMetrics = ok ? { REF, stay, leave } : fallback;
+  } catch (e) {
+    _faceMetrics = fallback;
+  }
+  return _faceMetrics;
+}
+ 
+// สร้างหน้า (+ กากบาท) เป็นแท็ก SVG text ที่จุดกึ่งกลาง (x, y) โดยหน้ามีเส้นผ่านศูนย์กลาง dia px
+// คืนค่า { face, xMark } (xMark ถูกซ่อนไว้ก่อน ผู้เรียกเป็นคนสั่งแสดง)
+function makeFaceParts(x, y, kind, dia){
+  const fm = getFaceMetrics(), m = fm[kind], sym = SYMBOLS[kind];
+  const k = dia / m.dia;   // ตัวคูณจากขนาดอ้างอิง -> ขนาดที่ต้องการ
+ 
+  // จัดให้ "กึ่งกลางเส้นของหน้า" อยู่ที่ (x, y) พอดี ไม่ขึ้นกับ metric ของฟอนต์
+  const face = el('text', {
+    x: x - m.cx * k, y: y - m.cy * k,
+    'text-anchor':'middle', 'dominant-baseline':'alphabetic',
+    'font-size': fm.REF * k, 'font-family': SYMBOLS.font
+  });
+  face.style.fill = sym.color;
+  face.textContent = sym.glyph;
+ 
+  const w = SYMBOLS.wrong;
+  const xMark = el('text', {
+    x, y,
+    'text-anchor':'middle', 'dominant-baseline':'central',
+    'font-size': dia * w.scale, 'font-weight': w.weight,
+    visibility:'hidden'
+  });
+  xMark.style.fill = w.color;
+  xMark.textContent = w.glyph;
+  return { face, xMark };
+}
+ 
+// สร้างไอคอน SVG ขนาดเล็กสำหรับใส่ใน HTML (legend / Confusion matrix)
+//   kind: 'stay' | 'leave' | 'wrong' (× อย่างเดียว),  wrong: true = ทับด้วย ×
+function makeFaceIcon(kind, dia, wrong){
+  const box = Math.ceil(dia * 1.1);
+  const svg = el('svg', { width: box, height: box, viewBox: `0 0 ${box} ${box}` });
+  const { face, xMark } = makeFaceParts(box/2, box/2, kind === 'wrong' ? 'stay' : kind, dia);
+  if (kind !== 'wrong') svg.appendChild(face);
+  if (kind === 'wrong' || wrong) { xMark.setAttribute('visibility', 'visible'); svg.appendChild(xMark); }
+  return svg;
+}
+ 
+// เติมไอคอนให้ทุกจุดใน HTML ที่ระบุ data-face="stay|leave|wrong" data-size="legend|cm" [data-wrong]
+function renderFaceIcons(){
+  document.querySelectorAll('[data-face]').forEach(node => {
+    const dia = SYMBOLS.size[node.dataset.size];
+    node.replaceChildren(makeFaceIcon(node.dataset.face, dia, node.hasAttribute('data-wrong')));
+  });
+}
+ 
+// ส่งสีจาก SYMBOLS ให้ CSS (ใช้กับสีสไลเดอร์ ฯลฯ) เพื่อให้สีตรงกันทั้งหน้า
+function applySymbolTheme(){
+  const root = document.documentElement.style;
+  root.setProperty('--stay',  SYMBOLS.stay.color);
+  root.setProperty('--leave', SYMBOLS.leave.color);
+}
+ 
+// ฟังก์ชันสร้าง Element ของ SVG อย่างรวดเร็ว
+function el(tag, attrs){
+  const n = document.createElementNS(svgNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+ 
+// ฟังก์ชันคำนวณจำนวน True Positive, False Positive, True Negative, False Negative ตามเส้น Threshold
+function computeCounts(threshold){
+  let TP=0, FP=0, TN=0, FN=0;
+  rawData.forEach(d=>{
+    const pred = d.score >= threshold ? 1 : 0; // ทายว่าเป็น 1 ถ้าคะแนนมากกว่า Threshold
+    if (pred===1 && d.label===1) TP++; // ทายลาออก และลาออกจริง
+    else if (pred===1 && d.label===0) FP++; // ทายลาออก แต่ไม่ลาออก
+    else if (pred===0 && d.label===1) FN++; // ทายไม่ลาออก แต่ดันลาออก
+    else TN++; // ทายไม่ลาออก และไม่ลาออกจริง
+  });
+  return {TP,FP,TN,FN};
+}
+ 
+let dpCache = null; // ตัวแปรเก็บแคชกราฟ เพื่อไม่ต้องวาดใหม่ทั้งหมดถ้าขนาดยังเท่าเดิม
+ 
+// ฟังก์ชันวาดกราฟ Dot Plot
+function drawDotPlot(threshold){
+  const svg = document.getElementById('dotPlot');
+  const W = 400, H = 220;
+  const padL = 12, padR = 12, padT = 6, padB = 16;
+  const chartW = W - padL - padR, chartH = H - padT - padB;
+  const xForScore = s => padL + s * chartW;
+  const thX = xForScore(threshold);
+ 
+  if (!dpCache) {
+    svg.innerHTML = "";
+    dpCache = {
+      bgNeg: el('rect', {x:padL, y:padT, height:chartH, fill:'#D4EEE7', 'fill-opacity':'0.45'}),  // ฝั่งทายไม่ลาออก (ซ้าย) เขียวอ่อน ตามหน้า 1
+      
+      bgPos: el('rect', {y:padT, height:chartH, fill:SYMBOLS.leave.color, 'fill-opacity':'0.25'}),  // ฝั่งทายลาออก (ขวา) แดงอ่อน ตามหน้า 1 (สีแดงจาก SYMBOLS)
+      
+      line: el('line', {y1:padT, y2:padT+chartH, stroke:'var(--line)', 'stroke-width':1.6}),
+      dots: []
+    };
+    svg.appendChild(dpCache.bgNeg);
+    svg.appendChild(dpCache.bgPos);
+ 
+    // เส้นแกน X (แนวนอน) และแกน Y (แนวตั้ง)
+    svg.appendChild(el('line', {x1:padL, y1:padT+chartH, x2:padL+chartW, y2:padT+chartH, stroke:'#000', 'stroke-width':1}));
+    svg.appendChild(el('line', {x1:padL, y1:padT, x2:padL, y2:padT+chartH, stroke:'#000', 'stroke-width':1}));
+ 
+    svg.appendChild(dpCache.line);
+ 
+    for (let t=0; t<=1.0001; t+=0.2){
+      const x = xForScore(t);
+      const lbl = el('text', {x, y:padT+chartH+12, 'text-anchor':'middle','font-size':'9', fill:'#000000'});
+      lbl.textContent = t.toFixed(1);
+      svg.appendChild(lbl);
     }
-    .unlock-btn:active {
-      transform: scale(0.95);
-      background: #333;
+ 
+    const bins = {};
+    rawData.forEach(d=>{
+      const k = binKey(d.score);
+      (bins[k] = bins[k] || []).push(d);
+    });
+    const dotR = Math.max(1.6, Math.min(3.2, chartW / (Object.keys(bins).length*2.2)));
+    // ตัวปรับขนาดของ ☹ ให้เท่า ☺ (คำนวณจากขนาดเส้นที่มองเห็นจริง)
+    const fmDots = getFaceMetrics();
+    const leaveFit = Math.min(1.5, Math.max(0.5, fmDots.stay.dia / fmDots.leave.dia));
+    // เส้นผ่านศูนย์กลางจริงของหน้า (☺ และ ☹ เท่ากันแล้ว) ที่ font-size ปกติ dotR*3.2
+    const rawDia = fmDots.stay.dia / fmDots.REF * (dotR*3.2);
+    // ห้ามซ้อนกัน: หน้าต้องไม่กว้างกว่า 1 คอลัมน์ (แนวนอน) ถ้ากว้างกว่าให้ย่อทั้งหมดลงให้พอดี
+    const fitK    = Math.min(1, chartW * BIN * 0.98 / rawDia);
+    const faceDia = rawDia * fitK;
+    const faceR   = faceDia / 2;
+    // ห้ามซ้อนกัน: ระยะแนวตั้งระหว่างหน้า = ขนาดหน้า + เว้นขอบ 6% (จุดที่ล้นขอบบนของกราฟจะไม่ถูกวาด)
+    const dotGap  = faceDia * 1.06;
+ 
+    Object.keys(bins).forEach(k=>{
+      const items = bins[k];
+      const x = xForScore(parseFloat(k));
+      items.forEach((d, idx)=>{
+        const y = padT + chartH - faceR - idx*dotGap;
+        if (y - faceR < padT - 0.01) return; 
+        // สี/รูปหน้าตามหน้า 1: ☺ เขียว = ไม่ลาออกจริง, ☹ แดง = ลาออกจริง (ค่าจาก SYMBOLS)
+        const kind = d.label === 1 ? 'leave' : 'stay';
+        // ขนาดหน้า: ☺ ใช้ dotR*3.2 เหมือนเดิม ส่วน ☹ ปรับให้ "เส้นที่มองเห็นจริง" เท่า ☺
+        // (ตัวอักษร ☹ ในฟอนต์มักวาดใหญ่กว่า ☺ ที่ font-size เท่ากัน จึงคูณตัวปรับจากที่วัดด้วย canvas)
+        const fsFace = dotR*3.2 * fitK * (kind === 'leave' ? leaveFit : 1);
+        const fmk = fmDots[kind], k2 = fsFace / fmDots.REF;   // ใช้จัดให้ "กึ่งกลางเส้นของหน้า" อยู่ที่ (x, y) พอดี
+        const node = el('text', {
+          x: x - fmk.cx*k2, y: y - fmk.cy*k2, 
+          'text-anchor':'middle',
+          'dominant-baseline':'alphabetic',
+          'font-size':fsFace,
+          'font-weight': 'bold',
+          'font-family': SYMBOLS.font   // ฟอนต์เดียวกับที่ใช้วัดขนาด
+        });
+        node.textContent = SYMBOLS[kind].glyph;
+        node.setAttribute('fill', SYMBOLS[kind].color);
+        svg.appendChild(node);
+ 
+        // × ทับหน้าเมื่อโมเดลทำนายผิด (ซ่อนไว้ก่อน) ขนาดเทียบกับหน้า 0.8 เท่า
+        const xMark = el('text', {
+          x, y,
+          'text-anchor':'middle',
+          'dominant-baseline':'central',
+          'font-size':(dotR*3.2*0.8*fitK),
+          'font-weight': SYMBOLS.wrong.weight,
+          fill: SYMBOLS.wrong.color,
+          visibility:'hidden'
+        });
+        xMark.textContent = SYMBOLS.wrong.glyph;
+        svg.appendChild(xMark);
+ 
+        dpCache.dots.push({ node, xMark, score: d.score, label: d.label, lastWrong: null });
+      });
+    });
+  }
+ 
+  dpCache.bgNeg.setAttribute('width', Math.max(0, thX-padL));
+  dpCache.bgPos.setAttribute('x', thX);
+  dpCache.bgPos.setAttribute('width', Math.max(0, padL+chartW-thX));
+  dpCache.line.setAttribute('x1', thX);
+  dpCache.line.setAttribute('x2', thX);
+ 
+  dpCache.dots.forEach(d => {
+    const predictedPositive = d.score >= threshold; // โมเดลทายว่าลาออก
+    // ผิดเมื่อ: (ทายลาออก แต่ไม่ลาออก) หรือ (ทายไม่ลาออก แต่ลาออกจริง) -> โชว์ ×
+    const wrong = (predictedPositive && d.label === 0) || (!predictedPositive && d.label === 1);
+ 
+    if (d.lastWrong !== wrong) {
+      d.xMark.setAttribute('visibility', wrong ? 'visible' : 'hidden');
+      d.lastWrong = wrong;
     }
-  </style>
+  });
+}
+ 
+/* 
+  ฟังก์ชันทำแอนิเมชันให้ตัวเลขวิ่งปรื๊ดๆ จากค่าเก่าไปค่าใหม่
+  el: จุดที่ต้องการแสดงผล, target: เลขเป้าหมาย, decimals: จำนวนทศนิยม
+*/
+function rollNumber(el, target, decimals){
+  if (el._raf) cancelAnimationFrame(el._raf); // หยุดแอนิเมชันเก่า
+  const from = (typeof el._v === 'number') ? el._v : 0; // หาค่าเริ่มต้น
+  if (from === target) { el._v = target; el.textContent = target.toFixed(decimals); return; } // ถ้าตรงกันแล้วไม่ต้องวิ่ง
+  const DUR = 450, t0 = performance.now(); // เวลาในการวิ่ง 450ms
+  
+  const step = now => {
+    const p = Math.min(1, (now - t0) / DUR); // สัดส่วนเวลา 0 ถึง 1
+    const e = 1 - Math.pow(1 - p, 3); // สูตร Ease-out (ให้เริ่มเร็วและชะลอตอนจบ)
+    el._v = p < 1 ? from + (target - from) * e : target;
+    el.textContent = el._v.toFixed(decimals);
+    el._raf = p < 1 ? requestAnimationFrame(step) : null;
+  };
+  el._raf = requestAnimationFrame(step); // เริ่มแอนิเมชัน
+}
+ 
+// ฟังก์ชันอัปเดตตัวเลขใน Confusion Matrix และ Metrics ทั้งหมด
+function drawConfusionMatrix(threshold){
+  // ไปเรียก computeCounts เพื่อหาว่าตอนนี้มีจำนวนทายถูกผิดเท่าไหร่
+  const {TP,FP,TN,FN} = computeCounts(threshold);
+  
+  // อัปเดตตารางหลัก
+  document.getElementById('cmTP').textContent = TP;
+  document.getElementById('cmFP').textContent = FP;
+  document.getElementById('cmFN').textContent = FN;
+  document.getElementById('cmTN').textContent = TN;
+ 
+  // คำนวณสูตร Metrics
+  const total = TP+FP+TN+FN;
+  const acc = total ? (TP+TN)/total : 0; // ความแม่นยำรวม
+  const prec = (TP+FP) ? TP/(TP+FP) : 0; // ความแม่นยำในการทายว่าลาออก
+  const tpr = (TP+FN) ? TP/(TP+FN) : 0; // ความสามารถในการจับคนลาออก (Recall)
+  const f1 = (prec+tpr) ? 2*prec*tpr/(prec+tpr) : 0; // F1 Score (เฉลี่ยฮาร์มอนิกของ Prec/Recall)
+ 
+  // สั่งให้ตัวเลขในสูตรวิ่งไปที่ค่าใหม่ (แอนิเมชัน)
+  const counts = {tp:TP, tn:TN, fp:FP, fn:FN};
+  document.querySelectorAll('[data-num]').forEach(e => rollNumber(e, counts[e.dataset.num], 0));
+  rollNumber(document.getElementById('mAcc'),  acc,  2);
+  rollNumber(document.getElementById('mPrec'), prec, 2);
+  rollNumber(document.getElementById('mTPR'),  tpr,  2);
+  rollNumber(document.getElementById('mF1'),   f1,   2);
+ 
+  // เงื่อนไข: ถ้ายิ่งค่า Recall ต่ำกว่า 0.5 (โมเดลจับคนลาออกได้น้อยเกินไป) 
+  // ให้ไฮไลต์ขอบกล่องเป็นสีแดง และสีส้มเพื่อเตือนความผิดปกติ
+  const boxAcc = document.getElementById('boxAcc');
+  const boxRecall = document.getElementById('boxRecall');
+  if (tpr < 0.5) {
+    boxAcc.style.boxShadow = '0 0 12px 2px rgba(255, 170, 0, 0.6)';
+    boxAcc.style.borderColor = 'rgba(255, 170, 0, 0.8)';
+    boxRecall.style.boxShadow = '0 0 12px 2px rgba(244, 63, 94, 0.45)';
+    boxRecall.style.borderColor = 'rgba(244, 63, 94, 0.6)';
+  } else {
+    boxAcc.style.boxShadow = '';
+    boxAcc.style.borderColor = '';
+    boxRecall.style.boxShadow = '';
+    boxRecall.style.borderColor = '';
+  }
+}
+ 
+// ฟังก์ชันหลักที่จะทำงานทุกครั้งที่ค่า Threshold เปลี่ยนไป
+function update(){
+  const t = parseFloat(slider.value); // อ่านค่าจากแถบเลื่อน
+  thVal.textContent = t.toFixed(2); // โชว์ค่า Threshold
+  slider.style.setProperty('--pct', (t*100)+'%'); // อัปเดตสีของสไลเดอร์
+  drawDotPlot(t); // วาดกราฟจุด
+  drawConfusionMatrix(t); // อัปเดตตารางตัวเลข
+}
+ 
+// เทคนิคการลดภาระเครื่อง (Throttle/Debounce) ให้อัปเดตได้ลื่นไหลตอนลากสไลเดอร์
+let updateReqId = null;
+function requestUpdate() {
+  if (!updateReqId) {
+    updateReqId = requestAnimationFrame(() => {
+      update();
+      updateReqId = null;
+    });
+  }
+}
+ 
+// จองความกว้างของตัวเลขตามจำนวนหลักสูงสุดที่เป็นไปได้ (ตามข้อมูลจริง)
+// ตัวเลขจะเปลี่ยน/วิ่งกี่หลักก็ตาม กล่องและตำแหน่งข้างเคียงก็ไม่ขยับ
+function reserveNumberWidths(){
+  const pos = rawData.filter(d => d.label === 1).length, neg = rawData.length - pos;
+  const digits = n => String(n).length + 'ch';
+  const maxOf = { tp:pos, fn:pos, fp:neg, tn:neg };
+  document.querySelectorAll('[data-num]').forEach(e => { e.style.minWidth = digits(maxOf[e.dataset.num]); });
+  const cmMax = { cmTP:pos, cmFN:pos, cmFP:neg, cmTN:neg };
+  Object.keys(cmMax).forEach(id => { document.getElementById(id).style.minWidth = digits(cmMax[id]); });
+}
+ 
+// ตั้งสีจาก SYMBOLS ให้ CSS และสร้างไอคอนใน legend / Confusion matrix
+applySymbolTheme();
+renderFaceIcons();
+reserveNumberWidths();
+ 
+// ดักจับเหตุการณ์ (Event) เมื่อผู้ใช้เลื่อนสไลเดอร์
+const slider = document.getElementById('thSlider');
+const thVal = document.getElementById('thVal');
+slider.addEventListener('input', requestUpdate);
+ 
+// ดักจับเหตุการณ์เมื่อผู้ใช้ย่อ/ขยายเบราว์เซอร์ เพื่อวาดกราฟให้พอดีกับจอใหม่
+window.addEventListener('resize', () => {
+  dpCache = null; // รีเซ็ตแคชทิ้ง เพื่อบังคับให้คำนวณตำแหน่งจุดใหม่
+  requestUpdate();
+});
+ 
+// หน่วงเวลาตั้งต้นเล็กน้อย (50ms) เผื่อให้เบราว์เซอร์คำนวณขนาดกว้าง/ยาวเสร็จก่อนเริ่มทำงาน
+setTimeout(() => {
+  dpCache = null; 
+  update();
+}, 50);
+ 
+// เรียกใช้ครั้งแรกสุดตอนเปิดหน้าเว็บ
+update();
+</script>
+<script>
+// เลื่อนแถบแท็บให้เห็นแท็บที่เลือกอยู่เสมอ (กรณีหน้าจอแคบ)
+(function(){
+  var a = document.querySelector('.tabs .tab.active');
+  if (a && a.scrollIntoView) a.scrollIntoView({inline:'center', block:'nearest'});
+})();
+</script>
+<script>
+// ===== ส่งค่า Threshold ต่อไปยังหน้าอื่นตอนสลับแท็บ =====
+// หลักการ: ตอนกดแท็บ จะแนบค่า threshold ปัจจุบันไปกับลิงก์เป็น ?t=... (เช่น page3.html?t=0.3500)
+//          หน้าปลายทางอ่านค่านี้ตอนโหลดมาตั้งเป็นค่าเริ่มต้น จึงใช้ได้ทั้งเปิดจากไฟล์ในเครื่องและอัปโหลดขึ้นเว็บ
+(function(){
+  var PARAM  = 't';
+  var slider = document.getElementById('thSlider');
+  var tabs   = document.querySelector('.tabs');
+  if (!slider || !tabs) return;
+ 
+  // 1) รับค่าที่ส่งมากับลิงก์ (?t=0.3500) แล้วตั้งให้แถบเลื่อน
+  var raw = NaN;
+  var q = new URLSearchParams(window.location.search).get(PARAM);
+  if (q !== null && q.trim() !== '') raw = Number(q);
+  var startValue = null;
+  if (isFinite(raw)) {
+    raw = Math.min(1, Math.max(0, raw));
+    slider.value = raw;                         // แถบเลื่อนของหน้านี้อาจปัดค่าตาม step
+    startValue = slider.value;                  // ค่าหลังถูกปัดแล้ว
+    slider.dispatchEvent(new Event('input'));   // สั่งให้หน้านี้วาดใหม่ตามค่านี้
+  }
+ 
+  // 2) ก่อนออกจากหน้า (กดแท็บ) แนบค่า threshold ปัจจุบันไปกับทุกลิงก์
+  function currentT(){
+    // ถ้ายังไม่ได้ขยับแถบเลื่อนในหน้านี้ ให้ส่งต่อค่าละเอียดที่รับมา (กันคลาดเคลื่อนจาก step เช่น หน้า 1 ปัดทีละ 0.01)
+    if (startValue !== null && slider.value === startValue) return raw;
+    return parseFloat(slider.value);
+  }
+  function stamp(){
+    var t = currentT();
+    if (!isFinite(t)) return;
+    var s = String(Math.round(t * 10000) / 10000);
+    tabs.querySelectorAll('a.tab[href]').forEach(function(a){
+      var base = a.getAttribute('href').split('?')[0];
+      a.setAttribute('href', base + '?' + PARAM + '=' + s);
+    });
+    try { history.replaceState(null, '', '?' + PARAM + '=' + s); } catch (e) {}   // ให้ปุ่ม Back กลับมาที่ค่านี้
+  }
+  ['pointerdown', 'click', 'focusin', 'contextmenu'].forEach(function(ev){
+    tabs.addEventListener(ev, stamp, true);
+  });
+})();
+<!-- โค้ดสำหรับดักจับการกดเปลี่ยนแท็บเพื่อถามรหัสผ่าน -->
 
-  <script>
-    // ฟังก์ชันสำหรับเช็ครหัสผ่าน
-    function unlockNextTab() {
-      // 1. ตั้งค่าว่าหน้านี้ จะไปหน้าไหนต่อ และใช้รหัสอะไร
-      // (เปลี่ยนค่าในบรรทัดด้านล่างนี้ ให้ตรงกับหน้าที่คุณกำลังใส่อยู่)
-      let nextPage = "page2.html"; 
-      let correctCode = "12";      // รหัสผ่านที่โชว์บนสไลด์
+  // ค้นหาแท็บทั้งหมดที่เป็นลิงก์ (สามารถกดเพื่อเปลี่ยนหน้าได้)
+  document.querySelectorAll('.tabs a.tab').forEach(function(tab) {
+    tab.addEventListener('click', function(event) {
+      event.preventDefault(); // หยุดการเปลี่ยนหน้าเว็บแบบปกติไว้ก่อน
+      
+      // กำหนดรหัสผ่านที่ถูกต้องสำหรับไปหน้าถัดไป (สามารถแก้ไขเป็นเลขอื่นได้)
+      let correctCode = "12"; 
 
-      // เด้งหน้าต่างให้เพื่อนพิมพ์รหัส
+      // เด้งหน้าต่างให้พิมพ์รหัสผ่าน
       let code = prompt("ใส่รหัส 2 หลักจากหน้าสไลด์เพื่อไปหัวข้อถัดไป:");
       
-      // ถ้าผู้ใช้กดยกเลิก (Cancel) ให้หยุดทำงาน
+      // ถ้าผู้ใช้กดยกเลิก (Cancel) ให้หยุดการทำงาน
       if (code === null) return; 
 
-      // ถ้ารหัสถูกต้อง
+      // ตรวจสอบรหัสผ่าน
       if (code === correctCode) {
-        alert("✅ ปลดล็อกสำเร็จ! ไปลุยกันต่อเลย");
-        window.location.href = nextPage;
+        // ถ้ารหัสถูกต้อง ให้เปลี่ยนหน้าไปยังลิงก์ (href) ของแท็บนั้นๆ
+        // (ซึ่งจะพ่วงค่า Threshold จากสคริปต์ก่อนหน้าไปด้วยโดยอัตโนมัติ)
+        window.location.href = this.href;
       } else {
-        // ถ้ารหัสผิด
-        alert("❌ รหัสไม่ถูกต้อง รอดูบนสไลด์ดีๆ นะ!");
+        // ถ้ารหัสผิด ให้แสดงข้อความแจ้งเตือน
+        alert("❌ รหัสไม่ถูกต้อง รอดูเลขบนสไลด์นะ!");
       }
-    }
-  </script>
+    });
+  });
+</script>
+</body>
+</html>
