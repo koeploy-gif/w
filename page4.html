@@ -17,6 +17,10 @@
     --roc-line:#8a2be2;
     --roc-text:#7c3aed;
     --tp:var(--pos); --tn:var(--pos); --fp:var(--neg); --fn:var(--neg);
+    
+    /* สีสำหรับกล่อง Conclusion */
+    --neg-pr:#ff00a2;
+    --pr-text:#d9a400;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -36,16 +40,14 @@
     padding-bottom: 2px;
   }
   .tab {
-    /* หน้าตาของปุ่มแท็บปกติ */
     padding: 6px 12px; background: var(--panel); border: 1px solid var(--border);
     border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;
     white-space: nowrap; color: var(--muted);
   }
   .tab.active {
-    /* หน้าตาของปุ่มแท็บเมื่อถูกเลือก (Active) */
     background: #e8e6e6; color: #000000; border-color: #acacac;
   }
-  a.tab{text-decoration:none;}   /* แท็บที่เป็นลิงก์ ไม่ขีดเส้นใต้ */
+  a.tab{text-decoration:none;}
 
   .thresh-bar{
     flex:0 0 auto; background:var(--panel); border:1px solid var(--border); border-radius:12px;
@@ -124,17 +126,17 @@
   .val-frac{font-family:system-ui, sans-serif; font-style:normal; font-size:9.5px;}
 
   /* แถวกราฟ: ROC (ซ้าย) + PR (ขวา) เป็นกล่องสี่เหลี่ยมจัตุรัส กล่องละครึ่ง */
-  .graph-row{flex:0 0 auto; display:flex; gap:8px;}
+  .graph-row{flex:0 0 auto; display:flex; gap:8px; margin-bottom:8px;}
   .graph-card{
-    flex:1 1 0; min-width:0; aspect-ratio:1 / 1;     /* กว้างครึ่งหนึ่ง สูงเท่ากว้าง */
+    flex:1 1 0; min-width:0; aspect-ratio:1 / 1;
     background:var(--panel); border:1px solid var(--border); border-radius:12px;
     padding:6px; display:flex; flex-direction:column; overflow:hidden;
   }
   .graph-card .chart-head{display:flex; justify-content:space-between; align-items:center; gap:4px; min-height:24px; margin-bottom:4px; padding:0 2px;}
   .graph-card .chart-title{font-size:11px; font-weight:800; white-space:nowrap;}
-  /* ป้าย AUC / PR-AUC (แบบหน้า 3) */
+  
   .graph-card .auc-badge{
-    --badge-w:100px; --badge-h:24px;     /* ขนาดป้าย AUC / PR-AUC เท่ากันทั้งสองกล่อง แก้ที่นี่ที่เดียว */
+    --badge-w:100px; --badge-h:24px;
     width:var(--badge-w); height:var(--badge-h); box-sizing:border-box; white-space:nowrap;
     display:inline-flex; align-items:center; justify-content:center; gap:4px; background:#fff; border:1.5px solid var(--border);
     border-radius:7px; padding:0 6px; box-shadow:0 2px 6px rgba(0,0,0,0.04);
@@ -146,14 +148,32 @@
   .graph-card .svg-wrap{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden;}
   .graph-card .svg-wrap svg{width:100%; height:100%; max-height:100%; touch-action:none; cursor:grab;}
   .graph-card .svg-wrap svg:active{cursor:grabbing;}
-  /* คำอธิบายเส้นใต้กราฟ (สูงเท่ากันทั้งสองกล่อง กราฟจึงมีขนาดเท่ากัน) */
   .gc-legend{flex:0 0 auto; min-height:30px; margin-top:4px; display:flex; flex-direction:column; justify-content:center; gap:2px; font-size:7px; color:var(--muted);}
   .gc-legend .lg-row{display:flex; align-items:center; gap:4px;}
   .gc-legend .lg-row > span{font-weight:700; font-size:7px;}
 
+  /* Conclusion Box ที่ถูกปรับแต่งให้เล็กลงและไม่แย่งสายตา */
+  .conclusion-box{
+    flex:0 0 auto; 
+    background:#fcfcfc; /* สีพื้นหลังสว่างแต่นวลตา */
+    border:1px solid var(--border); 
+    border-left:3px solid var(--pos); /* ลดความหนาเส้นเน้น */
+    border-radius:10px; 
+    padding:10px 12px; /* ลด padding */
+    font-size:11px; /* ลดขนาดตัวอักษรลง */
+    line-height:1.45; 
+    color:#444; /* ลดความเข้มของสีตัวหนังสือ */
+    box-shadow:none; /* เอาเงาออกไม่ให้เด่นเกินกราฟ */
+  }
+  .conclusion-box .title{
+    font-weight:800; font-size:11.5px; margin-bottom:4px; display:block; color:var(--ink);
+  }
+
   @media (min-height:760px){
     .head h1{font-size:16px;}
     .thresh-val{font-size:16px;}
+    .conclusion-box{font-size:12px; padding:12px 14px;}
+    .conclusion-box .title{font-size:13px; margin-bottom:4px;}
   }
 </style>
 </head>
@@ -163,7 +183,6 @@
     <h1>HR Attrition<br>PR-AUC</h1>
   </div>
 
-  <!-- แถบแท็บ: กดเพื่อสลับหน้า (ลิงก์ไปไฟล์ page1-4.html ที่อยู่โฟลเดอร์เดียวกัน) -->
   <div class="tabs">
     <a class="tab" href="index.html">Metric Dependent Threshold</a>
     <a class="tab" href="page2.html">ROC</a>
@@ -178,7 +197,6 @@
       <label>Threshold</label>
       <div class="thresh-val" id="thVal">1.0000</div>
     </div>
-    <!-- กลับไปใช้ 1.0000 เป็นจุดตั้งต้นเสมอ -->
     <input id="thSlider" type="range" min="0" max="1" step="0.0001" value="1.0000">
   </div>
 
@@ -250,7 +268,6 @@
     </div>
   </div>
 
-  <!-- แถวกราฟ: ซ้าย = ROC (พร้อมค่า AUC) / ขวา = PR (พร้อมค่า PR-AUC) กล่องละครึ่ง เป็นสี่เหลี่ยมจัตุรัส -->
   <div class="graph-row">
 
     <div class="graph-card">
@@ -279,7 +296,6 @@
     <div class="graph-card">
       <div class="chart-head">
         <div class="chart-title">PR Curve</div>
-        <!-- ป้าย PR-AUC (ขนาดเท่าป้าย AUC ของ ROC) แสดงตลอด เพราะเส้นถูกวาดเต็มไว้ล่วงหน้า -->
         <div id="aucContainer">
           <div class="auc-badge">
             <span class="lbl">PR-AUC</span>
@@ -316,6 +332,10 @@
       </div>
     </div>
 
+  </div>
+
+  <div class="conclusion-box" id="conclusionBox">
+    <!-- สรุปผลจะถูกสร้างด้วย JS อัตโนมัติตามข้อมูลจริง -->
   </div>
 
 <script>
@@ -432,11 +452,9 @@ function prCurvePoints(){
   let uniqueScores = Array.from(new Set(rawData.map(d => d.score)));
   let thresholds = uniqueScores.sort((a, b) => b - a);
   
-  // แก้นี้ครับ: บังคับยัด 1.0000 เข้าไปเป็นจุดเริ่มต้นที่คลีนที่สุดเสมอ
   if (thresholds[0] < 1) {
     thresholds.unshift(1.0000);
   }
-  
   if (thresholds[thresholds.length - 1] > 0) {
     thresholds.push(0);
   }
@@ -456,7 +474,6 @@ function computePrAuc(pts){
   for (let i=1; i<pts.length; i++){
     const [rec1, prec1] = pts[i-1];
     const [rec2, prec2] = pts[i];
-    
     auc += (rec2 - rec1) * prec2;
   }
   return auc;
@@ -485,7 +502,6 @@ function drawConfusionMatrix(threshold){
   return {rec, prec, tpr: rec, fpr};
 }
 
-// ขนาดและขอบของกราฟ PR = เท่ากับกราฟ ROC ทุกค่า (กรอบ 200 x 180) กราฟทั้งสองจึงใหญ่เท่ากัน
 const PR = { W:200, H:180, padL:28, padR:10, padT:16, padB:22 };
 PR.plotW = PR.W - PR.padL - PR.padR;
 PR.plotH = PR.H - PR.padT - PR.padB;
@@ -517,7 +533,6 @@ function drawPrPoint(threshold, metrics){
     const basePrecY = padT + (1-baselinePrec)*plotH;
     svg.appendChild(el('line', {x1:padL, y1:basePrecY, x2:padL+plotW, y2:basePrecY, stroke:'#9ca3af', 'stroke-width':1.2, 'stroke-dasharray':'4,3'}));
 
-    // เส้น PR + พื้นที่ใต้กราฟ: วาดเต็มเส้นไว้ล่วงหน้าเลย (ไม่ต้องรอเลื่อน threshold) เหมือนกราฟ ROC
     const pts = prCurvePoints();
     const linePath = pts.map((p,i)=>{
       const x = padL + p[0]*plotW;
@@ -534,7 +549,6 @@ function drawPrPoint(threshold, metrics){
     svg.appendChild(el('path', {d:areaPath, fill:'#ffe785', 'fill-opacity':'0.12', stroke:'none'}));
     svg.appendChild(el('path', {d:linePath, stroke:'#ffc900', 'stroke-width':2, fill:'none'}));
 
-    // จุดที่ลากได้ + ค่าพิกัด
     const circle = el('circle', {r:6, fill:'#ff00aa', stroke:'#ffffff', 'stroke-width':1.5});
     const coordText = el('text', {'font-size': '8', 'font-weight': '700', fill: '#ff00aa', 'pointer-events': 'none'});
     svg.appendChild(circle);
@@ -548,7 +562,6 @@ function drawPrPoint(threshold, metrics){
     prCache = { circle, coordText };
   }
 
-  // เลื่อน threshold ตอนนี้แค่ย้ายจุด + ค่าพิกัด
   const {rec, prec} = metrics;
   const cx = padL + rec*plotW, cy = padT + (1-prec)*plotH;
   prCache.circle.setAttribute('cx', cx);
@@ -562,7 +575,7 @@ function drawPrPoint(threshold, metrics){
   } else if (cx > 140) {
     textAnchor = 'end'; textX = cx - 10; textY = cy - 6;
   }
-  if (cy < padT + 12) {          // อยู่ชิดขอบบน: ย้ายข้อความลงมาใต้จุด
+  if (cy < padT + 12) {
     textY = cy + 14;
     if (textAnchor === 'middle') textY = cy + 16;
   }
@@ -572,9 +585,6 @@ function drawPrPoint(threshold, metrics){
   prCache.coordText.textContent = `(Recall: ${rec.toFixed(2)}, Precision: ${prec.toFixed(2)})`;
 }
 
-// ------------------------------------------------------------------
-// กราฟ ROC + ค่า AUC (ย้ายมาจากหน้า 3)
-// ------------------------------------------------------------------
 let rocPts = null;
 function rocCurvePoints(){
   if (rocPts) return rocPts;
@@ -592,7 +602,6 @@ const ROC = { W:200, H:180, padL:28, padR:10, padT:16, padB:22 };
 ROC.plotW = ROC.W - ROC.padL - ROC.padR;
 ROC.plotH = ROC.H - ROC.padT - ROC.padB;
 
-// คำนวณพื้นที่ใต้กราฟ ROC ด้วยวิธี Ranking (Mann-Whitney U test)
 function computeRocAuc(){
   let n1 = 0, n0 = 0;
   rawData.forEach(d => {
@@ -601,18 +610,15 @@ function computeRocAuc(){
   });
   if (n1 === 0 || n0 === 0) return 0;
 
-  // เรียงข้อมูลตามคะแนน (น้อยไปมาก)
   let sorted = [...rawData].sort((a, b) => a.score - b.score);
   
   let sumRankPos = 0;
   let i = 0;
   while (i < sorted.length) {
     let j = i;
-    // หาช่วงที่คะแนนเท่ากัน (Ties)
     while (j < sorted.length - 1 && sorted[j].score === sorted[j+1].score) {
       j++;
     }
-    // คำนวณอันดับเฉลี่ย (เริ่มที่ 1)
     let avgRank = ((i + 1) + (j + 1)) / 2;
     for (let k = i; k <= j; k++) {
       if (sorted[k].label === 1) {
@@ -622,7 +628,6 @@ function computeRocAuc(){
     i = j + 1;
   }
 
-  // สูตร Mann-Whitney U
   let uStat = sumRankPos - (n1 * (n1 + 1)) / 2;
   return uStat / (n1 * n0);
 }
@@ -635,7 +640,6 @@ function drawRocPoint(threshold, tprfpr){
   if (!rocCache) {
     svg.innerHTML = "";
 
-    // เส้น Grid และป้ายแกน
     for (let g=0; g<=1.0001; g+=0.25){
       const gx = padL + g*plotW;
       const gy = padT + (1-g)*plotH;
@@ -646,19 +650,15 @@ function drawRocPoint(threshold, tprfpr){
       const yl = el('text', {x:padL-5, y:gy+2.5, 'text-anchor':'end', 'font-size':'7.5', fill:'#666'});
       yl.textContent = g.toFixed(2); svg.appendChild(yl);
     }
-    // เส้นแกนหลัก
     svg.appendChild(el('line', {x1:padL, y1:padT, x2:padL, y2:padT+plotH, stroke:'#000', 'stroke-width':1}));
     svg.appendChild(el('line', {x1:padL, y1:padT+plotH, x2:padL+plotW, y2:padT+plotH, stroke:'#000', 'stroke-width':1}));
-    // ชื่อแกน
     const xt = el('text', {x:padL+plotW/2, y:H-2, 'text-anchor':'middle', 'font-size':'9', fill:'#000', 'font-weight':'700'});
     xt.textContent = 'FPR'; svg.appendChild(xt);
     const yt = el('text', {x:9, y:padT+plotH/2, 'text-anchor':'middle', 'font-size':'9', fill:'#000', 'font-weight':'700', transform:`rotate(-90 9 ${padT+plotH/2})`});
     yt.textContent = 'TPR'; svg.appendChild(yt);
 
-    // Baseline (เส้นประทแยง)
     svg.appendChild(el('line', {x1:padL, y1:padT+plotH, x2:padL+plotW, y2:padT, stroke:'#9ca3af', 'stroke-width':1.2, 'stroke-dasharray':'3,3'}));
 
-    // เส้นกราฟ + พื้นที่ใต้กราฟ (เรียง FPR น้อย -> มาก)
     const sorted = [...rocCurvePoints()].reverse();
     const linePath = sorted.map((p,i)=>{
       const x = padL + p[0]*plotW, y = padT + (1-p[1])*plotH;
@@ -670,7 +670,6 @@ function drawRocPoint(threshold, tprfpr){
     svg.appendChild(el('path', {d:areaPath, fill:'var(--roc-area)', stroke:'none'}));
     svg.appendChild(el('path', {d:linePath, stroke:'var(--roc-line)', 'stroke-width':2.5, fill:'none'}));
 
-    // จุดที่ลากได้ + ค่าพิกัด
     rocCache = {
       circle: el('circle', {r:6, fill:'#ff00a2', stroke:'#ffffff', 'stroke-width':1.5}),
       text: el('text', {'font-size':'8', 'font-weight':'800', fill:'#ff00a2', 'pointer-events':'none'})
@@ -743,7 +742,7 @@ function handlePrPointer(e) {
   if (!ctm) return;
   const pt = prSvg.createSVGPoint();
   pt.x = e.clientX; pt.y = e.clientY;
-  const p0 = pt.matrixTransform(ctm.inverse());   // พิกัดในระบบ viewBox ของ SVG
+  const p0 = pt.matrixTransform(ctm.inverse());   
   const plotW = PR.W - PR.padL - PR.padR, plotH = PR.H - PR.padT - PR.padB;
   const targetRec = (p0.x - PR.padL) / plotW;
   const targetPrec = 1 - (p0.y - PR.padT) / plotH;
@@ -794,7 +793,7 @@ function handleRocPointer(e) {
   if (!ctm) return;
   const pt = rocSvg.createSVGPoint();
   pt.x = e.clientX; pt.y = e.clientY;
-  const p0 = pt.matrixTransform(ctm.inverse());   // พิกัดในระบบ viewBox ของ SVG
+  const p0 = pt.matrixTransform(ctm.inverse());   
   const targetFpr = (p0.x - ROC.padL) / ROC.plotW;
   const targetTpr = 1 - (p0.y - ROC.padT) / ROC.plotH;
 
@@ -827,39 +826,58 @@ applySymbolTheme();
 renderFaceIcons();
 
 update();
+
+const totalEmp = rawData.length;
+const posEmp = rawData.filter(d => d.label === 1).length;
+const posRatio = posEmp / totalEmp;
+const posPercent = (posRatio * 100).toFixed(1);
+
+function updateConclusion() {
+  const box = document.getElementById('conclusionBox');
+  if (posRatio < 0.25) {
+    box.style.borderLeftColor = 'var(--neg-pr)';
+    box.innerHTML = `
+      <span class="title">สรุปเปรียบเทียบ:</span>
+      ชุดข้อมูลนี้มีสัดส่วนคนลาออกจริงเพียง <strong style="color:var(--neg-pr); font-size:1.05em;">${posPercent}%</strong> (Imbalanced Data) <br>
+      ดังนั้นการพิจารณา <strong style="color:var(--pr-text); font-size:1.05em;">PR Curve</strong> และค่า PR-AUC จะสะท้อนประสิทธิภาพที่แท้จริงของการจับ "คนที่ลาออก" ได้ดีกว่า <br>
+      ในขณะที่ <strong style="color:var(--roc-text); font-size:1.05em;">ROC Curve</strong> มักให้ค่าที่ดูสูงเกินจริง เนื่องจากได้รับอิทธิพลจากคนที่ไม่ลาออกที่มีจำนวนมากมาช่วยดันค่าเฉลี่ย
+    `;
+  } else {
+    box.style.borderLeftColor = 'var(--pos)';
+    box.innerHTML = `
+      <span class="title">สรุปเปรียบเทียบ:</span>
+      ชุดข้อมูลนี้มีสัดส่วนการลาออกอยู่ในเกณฑ์ที่สมดุล (ลาออกจริง <strong style="color:var(--pos); font-size:1.05em;">${posPercent}%</strong>) <br>
+      สามารถใช้ <strong style="color:var(--roc-text); font-size:1.05em;">ROC Curve</strong> และค่า ROC-AUC เป็นตัวชี้วัดหลักในการประเมินประสิทธิภาพโดยรวมของโมเดลได้อย่างเหมาะสม
+    `;
+  }
+}
+updateConclusion();
 </script>
 <script>
-// เลื่อนแถบแท็บให้เห็นแท็บที่เลือกอยู่เสมอ (กรณีหน้าจอแคบ)
 (function(){
   var a = document.querySelector('.tabs .tab.active');
   if (a && a.scrollIntoView) a.scrollIntoView({inline:'center', block:'nearest'});
 })();
 </script>
 <script>
-// ===== ส่งค่า Threshold ต่อไปยังหน้าอื่นตอนสลับแท็บ =====
-// หลักการ: ตอนกดแท็บ จะแนบค่า threshold ปัจจุบันไปกับลิงก์เป็น ?t=... (เช่น page3.html?t=0.3500)
-//          หน้าปลายทางอ่านค่านี้ตอนโหลดมาตั้งเป็นค่าเริ่มต้น จึงใช้ได้ทั้งเปิดจากไฟล์ในเครื่องและอัปโหลดขึ้นเว็บ
 (function(){
   var PARAM  = 't';
   var slider = document.getElementById('thSlider');
   var tabs   = document.querySelector('.tabs');
   if (!slider || !tabs) return;
 
-  // 1) รับค่าที่ส่งมากับลิงก์ (?t=0.3500) แล้วตั้งให้แถบเลื่อน
   var raw = NaN;
   var q = new URLSearchParams(window.location.search).get(PARAM);
   if (q !== null && q.trim() !== '') raw = Number(q);
   var startValue = null;
   if (isFinite(raw)) {
     raw = Math.min(1, Math.max(0, raw));
-    slider.value = raw;                         // แถบเลื่อนของหน้านี้อาจปัดค่าตาม step
-    startValue = slider.value;                  // ค่าหลังถูกปัดแล้ว
-    slider.dispatchEvent(new Event('input'));   // สั่งให้หน้านี้วาดใหม่ตามค่านี้
+    slider.value = raw;                         
+    startValue = slider.value;                  
+    slider.dispatchEvent(new Event('input'));   
   }
 
-  // 2) ก่อนออกจากหน้า (กดแท็บ) แนบค่า threshold ปัจจุบันไปกับทุกลิงก์
   function currentT(){
-    // ถ้ายังไม่ได้ขยับแถบเลื่อนในหน้านี้ ให้ส่งต่อค่าละเอียดที่รับมา (กันคลาดเคลื่อนจาก step เช่น หน้า 1 ปัดทีละ 0.01)
     if (startValue !== null && slider.value === startValue) return raw;
     return parseFloat(slider.value);
   }
@@ -871,7 +889,7 @@ update();
       var base = a.getAttribute('href').split('?')[0];
       a.setAttribute('href', base + '?' + PARAM + '=' + s);
     });
-    try { history.replaceState(null, '', '?' + PARAM + '=' + s); } catch (e) {}   // ให้ปุ่ม Back กลับมาที่ค่านี้
+    try { history.replaceState(null, '', '?' + PARAM + '=' + s); } catch (e) {}   
   }
   ['pointerdown', 'click', 'focusin', 'contextmenu'].forEach(function(ev){
     tabs.addEventListener(ev, stamp, true);
