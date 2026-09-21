@@ -795,6 +795,57 @@ update();
     tabs.addEventListener(ev, stamp, true);
   });
 })();
+  <!-- ปุ่มกดเพื่อใส่รหัสผ่าน (ตกแต่งให้เข้ากับธีมแอปของคุณ) -->
+  <div style="flex: 0 0 auto; text-align: center; margin-top: 10px;">
+    <button class="unlock-btn" onclick="unlockNextTab()">
+      🔒 ปลดล็อกหัวข้อถัดไป
+    </button>
+  </div>
+
+  <style>
+    /* ตกแต่งปุ่มให้ดูสวยงามเข้ากับหน้าเว็บของคุณ */
+    .unlock-btn {
+      background: #111;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.1s, background 0.2s;
+    }
+    .unlock-btn:active {
+      transform: scale(0.95);
+      background: #333;
+    }
+  </style>
+
+  <script>
+    // ฟังก์ชันสำหรับเช็ครหัสผ่าน
+    function unlockNextTab() {
+      // 1. ตั้งค่าว่าหน้านี้ จะไปหน้าไหนต่อ และใช้รหัสอะไร
+      // (เปลี่ยนค่าในบรรทัดด้านล่างนี้ ให้ตรงกับหน้าที่คุณกำลังใส่อยู่)
+      let nextPage = "page2.html"; 
+      let correctCode = "12";      // รหัสผ่านที่โชว์บนสไลด์
+
+      // เด้งหน้าต่างให้เพื่อนพิมพ์รหัส
+      let code = prompt("ใส่รหัส 2 หลักจากหน้าสไลด์เพื่อไปหัวข้อถัดไป:");
+      
+      // ถ้าผู้ใช้กดยกเลิก (Cancel) ให้หยุดทำงาน
+      if (code === null) return; 
+
+      // ถ้ารหัสถูกต้อง
+      if (code === correctCode) {
+        alert("✅ ปลดล็อกสำเร็จ! ไปลุยกันต่อเลย");
+        window.location.href = nextPage;
+      } else {
+        // ถ้ารหัสผิด
+        alert("❌ รหัสไม่ถูกต้อง รอดูบนสไลด์ดีๆ นะ!");
+      }
+    }
+  </script>
 </script>
 </body>
 </html>
