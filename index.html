@@ -762,7 +762,7 @@ update();
   var slider = document.getElementById('thSlider');
   var tabs   = document.querySelector('.tabs');
   if (!slider || !tabs) return;
- 
+
   // 1) รับค่าที่ส่งมากับลิงก์ (?t=0.3500) แล้วตั้งให้แถบเลื่อน
   var raw = NaN;
   var q = new URLSearchParams(window.location.search).get(PARAM);
@@ -774,7 +774,7 @@ update();
     startValue = slider.value;                  // ค่าหลังถูกปัดแล้ว
     slider.dispatchEvent(new Event('input'));   // สั่งให้หน้านี้วาดใหม่ตามค่านี้
   }
- 
+
   // 2) ก่อนออกจากหน้า (กดแท็บ) แนบค่า threshold ปัจจุบันไปกับทุกลิงก์
   function currentT(){
     // ถ้ายังไม่ได้ขยับแถบเลื่อนในหน้านี้ ให้ส่งต่อค่าละเอียดที่รับมา (กันคลาดเคลื่อนจาก step เช่น หน้า 1 ปัดทีละ 0.01)
@@ -795,33 +795,67 @@ update();
     tabs.addEventListener(ev, stamp, true);
   });
 })();
-<!-- โค้ดสำหรับดักจับการกดเปลี่ยนแท็บเพื่อถามรหัสผ่าน -->
+</script>
+<script>
+// ===== ใส่รหัสผ่านก่อนเปลี่ยนแท็บ (เหมือนไฟล์ index) + จำว่าหน้าไหนปลดล็อกแล้ว =====
+// กดแท็บไปหน้าอื่น -> ถ้าหน้านั้นยังไม่เคยปลดล็อก เด้งให้กรอกรหัส (ถูก = ไป / ผิด = ให้รอดูเลขบนสไลด์)
+// ถ้าเคยปลดล็อกแล้ว -> ไปได้เลยไม่ต้องกรอกอีก
+(function(){
+  var CORRECT_CODE = "12";      // รหัสของหน้านี้ (แก้เป็นเลขที่โชว์บนสไลด์ของหน้านี้ได้)
 
-  // ค้นหาแท็บทั้งหมดที่เป็นลิงก์ (สามารถกดเพื่อเปลี่ยนหน้าได้)
-  document.querySelectorAll('.tabs a.tab').forEach(function(tab) {
-    tab.addEventListener('click', function(event) {
-      event.preventDefault(); // หยุดการเปลี่ยนหน้าเว็บแบบปกติไว้ก่อน
-      
-      // กำหนดรหัสผ่านที่ถูกต้องสำหรับไปหน้าถัดไป (สามารถแก้ไขเป็นเลขอื่นได้)
-      let correctCode = "12"; 
+  var STORE_KEY = 'hrAttrUnlocked';   // ชื่อที่ใช้จำในเบราว์เซอร์ (localStorage) ร่วมกันทุกหน้า
+  var URL_PARAM = 'u';                // ส่งรายการที่ปลดล็อกแล้วไปกับลิงก์ด้วย (กรณีเปิดจากไฟล์ในเครื่องที่แต่ละไฟล์ใช้ localStorage ร่วมกันไม่ได้)
+
+  // ชื่อหน้าจากลิงก์ เช่น "page3.html?t=0.5" -> "page3", ที่อยู่ว่าง -> "index"
+  function key(h){
+    var n = String(h || '').split('#')[0].split('?')[0].split('/').pop().replace(/\.html?$/i, '');
+    return n || 'index';
+  }
+  var here = key(window.location.pathname);
+
+  var unlocked = {};
+  function add(name){ name = String(name || '').trim(); if (name) unlocked[name] = true; }
+  function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(Object.keys(unlocked))); } catch (e) {} }
+
+  // เปิดหน้าด้วย ?relock=1 เพื่อล้างการปลดล็อกทั้งหมด (ไว้ทดสอบ/เริ่มใหม่)
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('relock') === '1') { try { localStorage.removeItem(STORE_KEY); } catch (e) {} }
+  else {
+    try { (JSON.parse(localStorage.getItem(STORE_KEY) || '[]') || []).forEach(add); } catch (e) {}
+    (params.get(URL_PARAM) || '').split(',').forEach(add);      // ที่ส่งมากับลิงก์จากหน้าก่อน
+  }
+  add(here);      // หน้าที่กำลังเปิดอยู่ ถือว่าปลดล็อกแล้ว (กลับมาหน้านี้ภายหลังไม่ต้องกรอก)
+  save();
+
+  // แท็บที่เป็นลิงก์ (กดเพื่อเปลี่ยนหน้าได้)
+  document.querySelectorAll('.tabs a.tab').forEach(function(tab){
+    tab.addEventListener('click', function(event){
+      event.preventDefault();                       // หยุดการเปลี่ยนหน้าแบบปกติไว้ก่อน
+      var dest = key(this.getAttribute('href'));
+      var link = this;
+
+      function go(){
+        add(dest); save();
+        var url = new URL(link.href, window.location.href);   // ลิงก์นี้พ่วงค่า Threshold ไว้แล้วโดยสคริปต์ก่อนหน้า
+        url.searchParams.set(URL_PARAM, Object.keys(unlocked).join(','));
+        window.location.href = url.toString();
+      }
+
+      // เคยปลดล็อกหน้านี้แล้ว -> ไปได้เลย
+      if (unlocked[dest]) { go(); return; }
 
       // เด้งหน้าต่างให้พิมพ์รหัสผ่าน
-      let code = prompt("ใส่รหัส 2 หลักจากหน้าสไลด์เพื่อไปหัวข้อถัดไป:");
-      
-      // ถ้าผู้ใช้กดยกเลิก (Cancel) ให้หยุดการทำงาน
-      if (code === null) return; 
+      var code = prompt("ใส่รหัส 2 หลักจากหน้าสไลด์เพื่อไปหัวข้อถัดไป:");
+      if (code === null) return;                    // กดยกเลิก -> ไม่ทำอะไร
 
-      // ตรวจสอบรหัสผ่าน
-      if (code === correctCode) {
-        // ถ้ารหัสถูกต้อง ให้เปลี่ยนหน้าไปยังลิงก์ (href) ของแท็บนั้นๆ
-        // (ซึ่งจะพ่วงค่า Threshold จากสคริปต์ก่อนหน้าไปด้วยโดยอัตโนมัติ)
-        window.location.href = this.href;
+      if (code.trim() === CORRECT_CODE) {
+        go();                                       // รหัสถูก -> ปลดล็อกแล้วไปหน้านั้น
       } else {
-        // ถ้ารหัสผิด ให้แสดงข้อความแจ้งเตือน
         alert("❌ รหัสไม่ถูกต้อง รอดูเลขบนสไลด์นะ!");
       }
     });
   });
+})();
 </script>
 </body>
 </html>
