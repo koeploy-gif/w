@@ -182,16 +182,19 @@
     display:flex; flex-direction:column; justify-content:center;   /* ความสูงคงที่ เนื้อหาอยู่กึ่งกลางแนวตั้ง */
     box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
     container-type:inline-size; /* ตั้งค่าเพื่อให้คำนวณขนาดตัวอักษรตามกล่องได้ */
+    --fw:800;   /* ความหนาของ "สูตรตัวอักษร" และ "ผลลัพธ์" (สูตรใส่ตัวเลขไม่หนา) แก้ที่นี่ที่เดียว */
   }
   .metric .lbl{font-size:11px; color:var(--ink); font-weight:700; line-height:1.2;}
+  /* หัวกล่อง: ชื่อตัวชี้วัดชิดซ้าย ค่าผลลัพธ์ตัวใหญ่ชิดขวา (ทั้ง 4 กล่องเหมือนกัน) */
+  .metric .mhead{display:flex; align-items:baseline; justify-content:space-between; gap:6px;}
+  .metric .mhead .val{font-size:16px; font-weight:var(--fw); line-height:1.1; font-variant-numeric:tabular-nums; white-space:nowrap;}
 
   /* จัดรูปแบบการแสดงผล "สูตรคณิตศาสตร์แบบเศษส่วน" ให้สวยงาม */
   .formula{
-    --w:14; /* ตัวแปรกำหนดความกว้างกล่อง เพื่อคำนวณ font-size อัตโนมัติ */
-    --fw:800; /* ความหนาของ "สูตรตัวอักษร" และ "ผลลัพธ์" (สูตรใส่ตัวเลขไม่หนา) แก้ที่นี่ที่เดียว */
-    font-size:min(8px, calc(96cqw / var(--w))); /* ปรับขนาดฟอนต์ตามความกว้าง */
+    --w:17; /* ความกว้างโดยประมาณของแถวสูตร (หน่วย em) ใช้ค่าเดียวกันทั้ง 4 กล่อง ขนาดตัวอักษรสูตรจึงเท่ากันหมด */
+    font-size:min(9.5px, calc(96cqw / var(--w))); /* ปรับขนาดฟอนต์ตามความกว้างกล่อง */
     display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; white-space:nowrap;   /* ห้ามตกบรรทัด ความสูงจะได้ไม่เปลี่ยน */
-    gap:2px .4em; margin-top:0; line-height:1.1;
+    gap:2px .4em; margin-top:3px; line-height:1.1;
     font-variant-numeric:tabular-nums;
   }
   .formula .eq{color:var(--muted); font-weight:600;}
@@ -203,7 +206,6 @@
   .formula .frac .bot{padding:.12em .25em 0;}
   .formula .sym{font-family:"Times New Roman", Georgia, serif; font-style:italic; color:#222; font-weight:var(--fw);}
   .formula .num{color:#111;}
-  .formula .val{font-size:1.5em; font-weight:var(--fw); margin:0 0 0 .1em; white-space:nowrap;}
 
   .metrics-title{font-size:10px; font-weight:700; margin:0 0 4px;}
 
@@ -316,27 +318,21 @@
       
       <!-- ตัวชี้วัด Accuracy -->
       <div class="metric" id="boxAcc">
-        <div class="lbl">Accuracy</div>
-        <div class="formula" style="--w:22.5;">
-          <span class="eq">=</span>
+        <div class="mhead"><div class="lbl">Accuracy</div><span class="val" id="mAcc">0.00</span></div>
+        <div class="formula" style="--w:17;">          <span class="eq">=</span>
           <span class="frac sym"><span class="top">TP+TN</span><span class="bot">TP+TN+FP+FN</span></span>
           <span class="eq">=</span>
           <span class="frac num"><span class="top"><span data-num="tp">0</span>+<span data-num="tn">0</span></span><span class="bot"><span data-num="tp">0</span>+<span data-num="tn">0</span>+<span data-num="fp">0</span>+<span data-num="fn">0</span></span></span>
-          <span class="eq">=</span>
-          <span class="val" id="mAcc">0.00</span>
         </div>
       </div>
       
       <!-- ตัวชี้วัด Recall -->
       <div class="metric" id="boxRecall">
-        <div class="lbl">Recall</div>
-        <div class="formula" style="--w:15;">
-          <span class="eq">=</span>
+        <div class="mhead"><div class="lbl">Recall</div><span class="val" id="mTPR">0.00</span></div>
+        <div class="formula" style="--w:17;">          <span class="eq">=</span>
           <span class="frac sym"><span class="top">TP</span><span class="bot">TP+FN</span></span>
           <span class="eq">=</span>
           <span class="frac num"><span class="top"><span data-num="tp">0</span></span><span class="bot"><span data-num="tp">0</span>+<span data-num="fn">0</span></span></span>
-          <span class="eq">=</span>
-          <span class="val" id="mTPR">0.00</span>
         </div>
       </div>
     </div>
@@ -345,27 +341,21 @@
   <!-- ส่วนล่างสุด: แสดงตัวชี้วัด Precision และ F1-Score -->
   <div class="metrics">
     <div class="metric" id="boxPrec">
-      <div class="lbl">Precision</div>
-      <div class="formula" style="--w:15;">
-        <span class="eq">=</span>
+        <div class="mhead"><div class="lbl">Precision</div><span class="val" id="mPrec">0.00</span></div>
+        <div class="formula" style="--w:17;">        <span class="eq">=</span>
         <span class="frac sym"><span class="top">TP</span><span class="bot">TP+FP</span></span>
         <span class="eq">=</span>
         <span class="frac num"><span class="top"><span data-num="tp">0</span></span><span class="bot"><span data-num="tp">0</span>+<span data-num="fp">0</span></span></span>
-        <span class="eq">=</span>
-        <span class="val" id="mPrec">0.00</span>
+        </div>
       </div>
-    </div>
     <div class="metric" id="boxF1">
-      <div class="lbl">F1-score</div>
-      <div class="formula" style="--w:20.5;">
-        <span class="eq">=</span>
+        <div class="mhead"><div class="lbl">F1-score</div><span class="val" id="mF1">0.00</span></div>
+        <div class="formula" style="--w:17;">        <span class="eq">=</span>
         <span class="frac sym"><span class="top">2TP</span><span class="bot">2TP+FP+FN</span></span>
         <span class="eq">=</span>
         <span class="frac num"><span class="top">2×<span data-num="tp">0</span></span><span class="bot">2×<span data-num="tp">0</span>+<span data-num="fp">0</span>+<span data-num="fn">0</span></span></span>
-        <span class="eq">=</span>
-        <span class="val" id="mF1">0.00</span>
+        </div>
       </div>
-    </div>
   </div>
 
 <!-- ส่วนของ JavaScript เพื่อทำให้ทุกอย่างทำงาน -->
