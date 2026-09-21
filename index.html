@@ -23,11 +23,11 @@
     --line:#000000; --border:#e2e5eb;
     --tp:var(--leave); --tn:var(--stay); --fp:var(--stay); --fn:var(--leave);
     /* ความสูงคงที่ของส่วนล่าง: กล่อง Metric ทุกกล่องสูงเท่ากัน และแถว Confusion matrix สูง = ชื่อหัวข้อ + 2 กล่อง + ช่องว่าง */
-    --metric-h:54px;          /* ความสูงกล่อง Metric ทุกกล่อง (เดิม 46) */
+    --metric-h:65px;          /* ความสูงกล่อง Metric ทุกกล่อง (ล่างสุด + ฝั่งขวาของ Confusion matrix) ปรับให้ความสูงรวมส่วนล่างเท่าหน้า 3 */
     --side-title-h:14px;      /* ความสูงหัวข้อ "Metrics" (เดิม 12) */
     --side-gap:6px;           /* ช่องว่างระหว่างหัวข้อ/กล่องฝั่งขวา (เดิม 4) */
-    --block-gap:10px;         /* ช่องว่างระหว่างบล็อกใหญ่: กราฟ / แถว Confusion matrix / กล่องล่าง (เดิม 6) */
-    --row-h:calc(var(--metric-h) * 2 + var(--side-title-h) + var(--side-gap) * 2);   /* ความสูงแถว Confusion matrix + Metrics */
+    --block-gap:8px;          /* ช่องว่างใต้แถว Confusion matrix (เท่าหน้า 3) */
+    --row-min:195px;          /* ความสูงขั้นต่ำของแถว Confusion matrix = ความสูงตามเนื้อหาของการ์ด Confusion matrix ในหน้า 3 */
   }
 
   * {
@@ -131,7 +131,7 @@
   .face-icon svg{display:block; overflow:visible;}
 
   /* คลาสสำหรับแบ่ง 2 คอลัมน์ (ซ้ายตาราง ขวากล่องค่าประเมิน) */
-  .row{flex:1.3 1 0; min-height:var(--row-h); display:flex; gap:8px; margin-bottom:var(--block-gap);}   /* แบ่งพื้นที่ที่เหลือกับกราฟ 1 : 1.3 เหมือนหน้า 3 */
+  .row{flex:1.3 1 0; min-height:var(--row-min); display:flex; gap:8px; margin-bottom:var(--block-gap);}   /* แบ่งพื้นที่ที่เหลือกับกราฟ 1 : 1.3 เหมือนหน้า 3 */
 
   /* ตกแต่งการ์ดแสดงตาราง Confusion matrix */
   .cm-card{
