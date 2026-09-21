@@ -254,38 +254,38 @@
     <!-- พื้นที่แสดงกราฟ -->
     <div class="pr-svg-wrap" style="flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0;">
       
-      <!-- กรอบจำลองอัตราส่วน 1:1 เพื่อยึดตำแหน่งกล่องคำอธิบายให้ตรงกับขอบ Grid ภายใน SVG พอดี -->
+      <!-- กรอบจำลองอัตราส่วน 1:1 -->
       <div style="position: relative; width: 100%; max-height: 100%; aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center;">
         
-        <!-- กล่องคำอธิบาย (ลอยอยู่ด้านในมุมบนขวาของ Grid) -->
-        <div style="position: absolute; top: 17%; right: 6%; display: flex; flex-direction: column; gap: 8px; font-size: 10px; color: var(--muted); border: 1px solid var(--border); background: rgba(255, 255, 255, 0.95); padding: 6px 10px; border-radius: 6px; pointer-events: none; z-index: 10;">
+        <!-- กล่องคำอธิบาย ปรับให้เล็กลง และขยับเข้าซ้ายอีกนิด (right: 10%) -->
+        <div style="position: absolute; top: 18%; right: 10%; display: flex; flex-direction: column; gap: 4px; font-size: 8px; color: var(--muted); border: 1px solid var(--border); background: rgba(255, 255, 255, 0.95); padding: 4px 6px; border-radius: 4px; pointer-events: none; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
           
           <!-- เส้นสีเหลือง: PR Curve -->
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <svg width="18" height="4" style="overflow: visible; flex: 0 0 auto;">
-              <line x1="0" y1="2" x2="18" y2="2" stroke="#ffc900" stroke-width="2.5"></line>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="4" style="overflow: visible; flex: 0 0 auto;">
+              <line x1="0" y1="2" x2="12" y2="2" stroke="#ffc900" stroke-width="2"></line>
             </svg>
-            <span style="font-weight: 700;">PR Curve</span>
+            <span style="font-weight: 700; font-size: 8.5px;">PR Curve</span>
           </div>
           
           <!-- เส้นประ: Baseline พร้อมสูตรเศษส่วน -->
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <svg width="18" height="4" style="overflow: visible; flex: 0 0 auto;">
-              <line x1="0" y1="2" x2="18" y2="2" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4,3"></line>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <svg width="12" height="4" style="overflow: visible; flex: 0 0 auto;">
+              <line x1="0" y1="2" x2="12" y2="2" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="3,2"></line>
             </svg>
-            <div class="math-row" style="font-size: 9px;">
+            <div class="math-row" style="font-size: 7.5px;">
               <span>Baseline (</span>
               <div class="frac">
-                <span class="num">P</span>
-                <span class="den">P + N</span>
+                <span class="num" style="padding: 0 1px;">P</span>
+                <span class="den" style="padding: 0 1px;">P + N</span>
               </div>
               <span class="eq">=</span>
-              <div class="frac val-frac">
-                <span class="num" id="baseP">47</span>
-                <span class="den" id="baseTotal">294</span>
+              <div class="frac val-frac" style="font-size: 7.5px;">
+                <span class="num" id="baseP" style="padding: 0 1px;">47</span>
+                <span class="den" id="baseTotal" style="padding: 0 1px;">247</span>
               </div>
               <span class="eq">=</span>
-              <span class="res" id="baseRes" style="font-size: 10.5px;">0.16</span>
+              <span class="res" id="baseRes" style="font-size: 8.5px;">0.16</span>
               <span>)</span>
             </div>
           </div>
@@ -298,6 +298,7 @@
       </div>
     </div>
 
+  </div>
   </div>
   </div>
     </div>
