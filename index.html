@@ -23,7 +23,8 @@
     --line:#000000; --border:#e2e5eb;
     --tp:var(--leave); --tn:var(--stay); --fp:var(--stay); --fn:var(--leave);
     /* ความสูงคงที่ของส่วนล่าง: กล่อง Metric ทุกกล่องสูงเท่ากัน และแถว Confusion matrix สูง = ชื่อหัวข้อ + 2 กล่อง + ช่องว่าง */
-    --metric-h:65px;          /* ความสูงกล่อง Metric ทุกกล่อง (ล่างสุด + ฝั่งขวาของ Confusion matrix) ปรับให้ความสูงรวมส่วนล่างเท่าหน้า 3 */
+    --metric-h:50px;          /* ความสูงกล่อง Metric ฝั่งขวา (ลดลง 6px) */
+    --metric-bottom-h:65px;   /* ความสูงกล่อง Metric ด้านล่าง (คงเดิม) */        /* ความสูงกล่อง Metric ทุกกล่อง (ล่างสุด + ฝั่งขวาของ Confusion matrix) ปรับให้ความสูงรวมส่วนล่างเท่าหน้า 3 */
     --side-title-h:14px;      /* ความสูงหัวข้อ "Metrics" (เดิม 12) */
     --side-gap:6px;           /* ช่องว่างระหว่างหัวข้อ/กล่องฝั่งขวา (เดิม 4) */
     --block-gap:8px;          /* ช่องว่างใต้แถว Confusion matrix (เท่าหน้า 3) */
@@ -154,7 +155,7 @@
   }
   .quad-main{display:flex; align-items:center; justify-content:center; gap:5px;}
   .quad .n{font-size:14px; font-weight:800; line-height:1.1; text-align:left;}   /* ความกว้างขั้นต่ำถูกจองโดย JS ตามจำนวนหลักสูงสุด */
-  .quad .l{font-size:6.5px; color:#000000; margin-top:0; line-height:1.1;}
+  .quad .l{font-size:14px;font-weight:650; color:#000000; margin-top:0; line-height:1.1;}
   /* สีพื้นหลังช่องตามผลลัพธ์ */
   .quad.tp{background:rgba(21, 214, 79, 0.10);} /* ทายถูกว่าลาออก (พื้นเขียวอ่อน) */
   .quad.fp{background:rgba(245, 34, 87, 0.10);} /* ทายผิดว่าลาออก (พื้นแดงอ่อน) */
@@ -169,6 +170,8 @@
   /* ตกแต่งกล่อง Metrics ด้านขวาบน (Accuracy, Recall) */
   .side{
     flex:1 1 0; min-width:0; min-height:0; display:flex; flex-direction:column; gap:var(--side-gap);
+    margin-top: 6px; /* ดันลงมา 6px */
+    margin-bottom: 6px; /* ดันขึ้นไป 6px */
   }
   .side .metrics-title{margin:0; flex:0 0 var(--side-title-h); height:var(--side-title-h); line-height:var(--side-title-h);}
   .side .metric{flex:1 1 var(--metric-h); height:auto; min-height:var(--metric-h);}
