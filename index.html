@@ -177,9 +177,9 @@
   .metric{
     background:#f7f9fc; 
     border:1px solid rgba(0,0,0,0.04); border-radius:12px;
-    padding:3px 8px; text-align:left;
+    padding:6px 8px; text-align:left;   /* เว้นขอบบน/ล่าง 6px */
     height:var(--metric-h); overflow:hidden; min-width:0;
-    display:flex; flex-direction:column; justify-content:center;   /* ความสูงคงที่ เนื้อหาอยู่กึ่งกลางแนวตั้ง */
+    display:flex; flex-direction:column; justify-content:space-between;   /* หัวกล่องชิดขอบบน สูตรชิดขอบล่าง ช่องว่างตรงกลางเพิ่มตามความสูงกล่อง */
     box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
     container-type:inline-size; /* ตั้งค่าเพื่อให้คำนวณขนาดตัวอักษรตามกล่องได้ */
     --fw:800;   /* ความหนาของ "สูตรตัวอักษร" และ "ผลลัพธ์" (สูตรใส่ตัวเลขไม่หนา) แก้ที่นี่ที่เดียว */
@@ -194,7 +194,7 @@
     --w:17; /* ความกว้างโดยประมาณของแถวสูตร (หน่วย em) ใช้ค่าเดียวกันทั้ง 4 กล่อง ขนาดตัวอักษรสูตรจึงเท่ากันหมด */
     font-size:min(9.5px, calc(96cqw / var(--w))); /* ปรับขนาดฟอนต์ตามความกว้างกล่อง */
     display:flex; align-items:center; justify-content:center; flex-wrap:nowrap; white-space:nowrap;   /* ห้ามตกบรรทัด ความสูงจะได้ไม่เปลี่ยน */
-    gap:2px .4em; margin-top:3px; line-height:1.1;
+    gap:2px .4em; margin-top:0; line-height:1.1;
     font-variant-numeric:tabular-nums;
   }
   .formula .eq{color:var(--muted); font-weight:600;}
