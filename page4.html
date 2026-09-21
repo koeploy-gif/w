@@ -258,14 +258,14 @@
       <div style="position: relative; width: 100%; max-height: 100%; aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center;">
         
         <!-- กล่องคำอธิบาย ปรับให้เล็กลง และขยับเข้าซ้ายอีกนิด (right: 10%) -->
-        <div style="position: absolute; top: 18%; right: 8%; display: flex; flex-direction: column; gap: 4px; font-size: 8px; color: var(--muted); border: 1px solid var(--border); background: rgba(255, 255, 255, 0.95); padding: 4px 6px; border-radius: 4px; pointer-events: none; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="position: absolute; top: 18%; right: 20%; display: flex; flex-direction: column; gap: 2px; font-size: 7px; color: var(--muted); border: 1px solid var(--border); background: rgba(255, 255, 255, 0.95); padding: 4px 5px; border-radius: 4px; pointer-events: none; z-index: 10; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
           
           <!-- เส้นสีเหลือง: PR Curve -->
           <div style="display: flex; align-items: center; gap: 4px;">
             <svg width="12" height="4" style="overflow: visible; flex: 0 0 auto;">
               <line x1="0" y1="2" x2="12" y2="2" stroke="#ffc900" stroke-width="2"></line>
             </svg>
-            <span style="font-weight: 700; font-size: 8.5px;">PR Curve</span>
+            <span style="font-weight: 700; font-size: 7px;">PR Curve</span>
           </div>
           
           <!-- เส้นประ: Baseline พร้อมสูตรเศษส่วน -->
@@ -273,19 +273,19 @@
             <svg width="12" height="4" style="overflow: visible; flex: 0 0 auto;">
               <line x1="0" y1="2" x2="12" y2="2" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="3,2"></line>
             </svg>
-            <div class="math-row" style="font-size: 7.5px;">
+            <div class="math-row" style="font-size: 7px;">
               <span>Baseline (</span>
               <div class="frac">
                 <span class="num" style="padding: 0 1px;">P</span>
                 <span class="den" style="padding: 0 1px;">P + N</span>
               </div>
               <span class="eq">=</span>
-              <div class="frac val-frac" style="font-size: 7.5px;">
+              <div class="frac val-frac" style="font-size: 7px;">
                 <span class="num" id="baseP" style="padding: 0 1px;">47</span>
                 <span class="den" id="baseTotal" style="padding: 0 1px;">247</span>
               </div>
               <span class="eq">=</span>
-              <span class="res" id="baseRes" style="font-size: 8.5px;">0.16</span>
+              <span class="res" id="baseRes" style="font-size: 7.5px;">0.16</span>
               <span>)</span>
             </div>
           </div>
